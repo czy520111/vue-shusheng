@@ -34,28 +34,24 @@ let Web = {
   getPosition(e) {
     const store = useUsersStore();
     let scene = GlobalViewer.scene;
-    let camera = GlobalViewer.scene.mainCamera;
-    let glob = GlobalViewer.scene.globe;
-
     var ray = scene.mainCamera.screenPointToRay(e.x, e.y);
     var hit = new SSmap.RaycastHit();
     let result = null;
     if (scene.raycast(ray, hit)) {
       console.log("hit");
-      result = hit.point.toCartographic(); //获取射和实体的交点
+      result = hit.point.toCartesian3().toCartographic(); //获取射和实体的交点
       // let a = GlobalViewer.scene.getWorldPositionByMouse(result);
-      // debugger;
-
-      // let gg = scene.pickFeature(ray, result);
-      // let aa = hit.entity;
-
       store.result = result.toVector3();
     }
     hit.delete();
     store.changeposition(result);
     const check = store.check;
     const pointArr = store.pointArr;
+    debugger;
+
+    var xyposition = scene.mainCamera.worldToScreenPoint(result);
     console.log(result, "666", store.result, store.$state);
+
     if (check == 1) {
       pointArr.push(result.toVector3());
 
@@ -86,7 +82,7 @@ let Web = {
       pyramid.create();
 
       let pyramidEntity = pyramid.createEntity();
-      pyramidEntity.add(pyramid);
+      // pyramidEntity.add(pyramid);
       pyramidEntity.parent = SSmap.Entity.root();
       // if (pointArr.length > 1) {
       //   let end = pointArr[pointArr.length - 2];

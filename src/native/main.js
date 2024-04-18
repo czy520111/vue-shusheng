@@ -19,6 +19,12 @@ export function addArcGisImagery() {
   let scene = GlobalViewer.scene;
   let globe = scene.globe;
   globe.addArcGisMapServerImageryLayer(url || arcGisImageryUrl);
+
+  // let wmtsurl =
+  //   "crs=EPSG:3857&format=image/jpeg&layers=World_Imagery&styles=default&tileMatrixSet=default028mm&url=https://server.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/WMTS";
+  // //let wmtsurl ="IgnoreAxisOrientation=1&IgnoreGetMapUrl=1&IgnoreReportedLayerExtents=1&InvertAxisOrientation=1&crs=EPSG:4326&dpiMode=7&format=image/png&layers=wmts_4326_440300&styles=default&tileMatrixSet=c&url=https://jingzhe.szft.gov.cn/sfmap/MapTileService/wmts?SERVICE%3DWMTS%26REQUEST%3DGetCapabilities%26STORETYPE%3Dmerged-dat%26LAYER%3Dwmts_4326_440300%26PROJECTION%3D4326";
+  // window.nowLayer = window.GlobalViewer.scene.globe.addWmsImageryLayer(wmtsurl);
+  // window.GlobalViewer.scene.globe.lightingEnabled = false;
 }
 
 /**

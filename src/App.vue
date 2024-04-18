@@ -4,7 +4,6 @@
     <div
       class="viewer-container"
       ref="container"
-      @click.native="Web.getPosition"
       @contextmenu.prevent="Web.removeContextmenu()"
     ></div>
 
@@ -24,16 +23,19 @@
         </li>
       </ul>
       <Measurement></Measurement>
+      <Coordinate />
+      <!-- <Point></Point> -->
     </div>
   </div>
 </template>
 
 <script setup>
 import Measurement from "./components/Measurement.vue";
+import Coordinate from "./components/coordinate.vue";
 import { ref, onMounted } from "vue";
 import Web from "./web/index.js";
 import * as Native from "./native/main.js";
-import qtLoader from "./assets/loader.js";
+import qtLoader from "../assets/loader.js";
 
 // export default {
 //   name: "app",
@@ -66,7 +68,7 @@ onMounted(() => {
   }).then(([SSmap, GlobalViewer]) => {
     // 设置Native全局变量
     window.Native = Native;
-
+    window.nowLayer = null;
     // 设置视图全局变量
     window.GlobalViewer = GlobalViewer;
     window.SSmap = SSmap;
@@ -74,6 +76,13 @@ onMounted(() => {
     // 浏览器环境全局变量
     window.isWeb = true;
 
+    window.HtmldomList = [];
+    window.pointLineList = [];
+    window.linedistance = 0;
+    window.entityAllList = [];
+    window.nodeMoveList = [];
+    window.laberMoveList = [];
+    window.billboardCollection = null;
     // 初始化完成
     Web.initMap();
   });
