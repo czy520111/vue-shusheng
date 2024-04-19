@@ -12,12 +12,14 @@
 import { ElMessage } from "element-plus";
 import { useUsersStore } from "../store";
 import { getWorldPosition } from "../editor/math";
-import { ref } from "vue";
+import { addBillboard } from "../editor/draw";
+import { ref, reactive } from "vue";
 const store = useUsersStore();
 const text = ref("");
 const check = ref(false);
 const idnum = ref(0);
 const pointArr = ref([]);
+const bbList = reactive([]);
 const setLine = () => {
   clearMeasure();
 
@@ -35,9 +37,7 @@ const setLine = () => {
   document
     .getElementById("qtcanvas")
     .addEventListener("contextmenu", ContextMenuEvent);
-  document
-    .getElementById("qtcanvas")
-    .addEventListener("dblclick", dblClickEvent);
+
   ElMessage.info("左键获取，右键结束");
   // console.log("setLine", store.worldPosition, store.check);
   // pointArr.value.push(store.worldPosition);
@@ -51,13 +51,18 @@ const setLine = () => {
   // }
 };
 const clearMeasure = () => {
-  debugger;
   if (window.entityAllList.length > 0) {
     let length = window.entityAllList.length;
     for (var i = length - 1; i > -1; i--) {
       window.entityAllList[i].delete();
       window.entityAllList.splice(i, 1);
       delete window.entityAllList[i];
+    }
+    let length3 = bbList.length;
+    for (var i = length3 - 1; i > -1; i--) {
+      toRaw(bbList[i]).delete();
+      bbList.splice(i, 1);
+      delete toRaw(bbList[i]);
     }
   }
 };
@@ -71,6 +76,19 @@ const mouseClickEvent = (event) => {
   }
 
   window.pointLineList.push(point); //记录点击的节点坐标
+
+  let Geoobj = {
+    position: point, //坐标
+    name: "zuobiao",
+    url: "src/images/circle.png", //路径
+    scale: 0.5, //比例
+    altitude: 10, //海拔，非必填
+    // imageWidth:0,
+    // imageHeight:0,
+    altitudeMethod: SSmap.AltitudeMethod.Absolute, //Absolute 绝对海拔  OnTerrain 贴地 RelativeToTerrain 贴地并相对海拔
+  };
+  var Billboard = addBillboard(Geoobj);
+  bbList.push(Billboard);
 
   //两个节点确定一条线
   if (window.pointLineList.length > 1) {
@@ -111,7 +129,6 @@ const mouseClickEvent = (event) => {
       name: "label",
       // id: "measure",
     };
-    debugger;
     var label3d = addLabel3D(labelObj);
     window.entityAllList.push(label3d);
     // let lableEntity = new SSmap.VisualEntity();
@@ -135,20 +152,12 @@ const ContextMenuEvent = () => {
 };
 
 const dblClickEvent = (event) => {
-  var camera = window.GlobalViewer.scene.mainCamera; //获取相机
-
-  var hit = new SSmap.RaycastHit(); //射线投影
-  //鼠标点击的位置，通过相机视角射线获取
-  var ray = camera.screenPointToRay(event.x, event.y);
-  var rayok = window.GlobalViewer.scene.raycast(ray, hit); //判断是否存在
-  var point = 0;
-  if (rayok) {
-    if (hit) {
-      debugger;
-      point = hit.point; //Vector3
+  let feature = window.GlobalViewer.scene.getFeatureByMouse();
+  if (feature) {
+    if (feature.parent.objectName == "polyline") {
+      console.log("获取线图层属性", feature);
     }
   }
-  hit.delete();
 };
 
 const endMeasure = () => {
@@ -162,6 +171,9 @@ const endMeasure = () => {
   document
     .getElementById("qtcanvas")
     .removeEventListener("contextmenu", ContextMenuEvent);
+  document
+    .getElementById("qtcanvas")
+    .addEventListener("dblclick", dblClickEvent);
 };
 
 const drawPolyline = (opt) => {
@@ -178,6 +190,7 @@ const drawPolyline = (opt) => {
   polyline.setMinDistance(5.0);
   polyline.name = opt.name;
   polyline.addProperty("name", opt.name);
+  polyline.objectName = "polyline";
   polyline.draw();
   polyline.end();
   return polyline;

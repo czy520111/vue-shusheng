@@ -9,8 +9,10 @@ import { ref, reactive, toRaw } from "vue";
 import { useUsersStore } from "../store";
 import { getWorldPosition } from "../editor/math";
 import { ElMessage } from "element-plus";
+import { addBillboard } from "../editor/draw";
 const store = useUsersStore();
 const pointList = reactive([]);
+const bbList = reactive([]);
 const setPoint = () => {
   clearMeasure();
   document
@@ -20,6 +22,9 @@ const setPoint = () => {
   document
     .getElementById("qtcanvas")
     .addEventListener("contextmenu", ContextMenuEvent);
+  document
+    .getElementById("qtcanvas")
+    .removeEventListener("mousemove", mouseMove);
   ElMessage.info("左键获取坐标");
 };
 
@@ -37,7 +42,18 @@ const clearMeasure = () => {
 const mouseClickEvent = (event) => {
   let point = getWorldPosition(event);
   let la = point.toCartographic().toDegrees();
-
+  let Geoobj = {
+    position: point, //坐标
+    name: "zuobiao",
+    url: "src/images/circle.png", //路径
+    scale: 0.5, //比例
+    altitude: 10, //海拔，非必填
+    // imageWidth:0,
+    // imageHeight:0,
+    altitudeMethod: SSmap.AltitudeMethod.Absolute, //Absolute 绝对海拔  OnTerrain 贴地 RelativeToTerrain 贴地并相对海拔
+  };
+  var Billboard = addBillboard(Geoobj);
+  bbList.push(Billboard);
   console.log("la", la);
   let obj = {
     point,
@@ -53,26 +69,32 @@ const mouseClickEvent = (event) => {
 };
 const getText = (event) => {
   document.getElementById("qtcanvas").addEventListener("click", getTextEvent);
+  document.getElementById("qtcanvas").addEventListener("mousemove", mouseMove);
   //   let point = getWorldPosition(event);
   //   console.log("point", point);
 };
 const getTextEvent = (event) => {
-  //   let point = getWorldPosition(event);
-  var camera = window.GlobalViewer.scene.mainCamera; //获取相机
-
-  var hit = new SSmap.RaycastHit(); //射线投影
-  //鼠标点击的位置，通过相机视角射线获取
-  var ray = camera.screenPointToRay(event.x, event.y);
-  var rayok = window.GlobalViewer.scene.raycast(ray, hit); //判断是否存在
-  var point = 0;
-  if (rayok) {
-    if (hit) {
-      point = hit.point; //Vector3
+  var e = event;
+  if (e) {
+    let feature = window.GlobalViewer.scene.getFeatureByMouse();
+    if (feature) {
+      //   debugger;
+      //   console.log("获取线图层属性");
+      //   console.log(feature.parent.text);
+      let text = feature.parent.text;
+      navigator.clipboard.writeText(text);
+      ElMessage.success("复制成功");
+      //   this.lineLayerPick(feature);
     }
   }
-  hit.delete();
-
-  console.log("point", point);
+};
+const mouseMove = (e) => {
+  let feature = window.GlobalViewer.scene.getFeatureByMouse();
+  if (feature) {
+    document.getElementById("qtcanvas").style.cursor = "pointer";
+  } else {
+    document.getElementById("qtcanvas").style.cursor = "default";
+  }
 };
 const drawShpere = (obj) => {
   let sphere = new SSmap.Sphere3D();

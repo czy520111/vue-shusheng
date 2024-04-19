@@ -17,6 +17,7 @@ import {
   drawLabel,
   drawPolygonGeometry,
   drawPolygon3D,
+  addBillboard,
 } from "../editor/draw.js";
 import { ElMessage } from "element-plus";
 const store = useUsersStore();
@@ -25,6 +26,7 @@ const threeList = reactive([]);
 const moveList = reactive([]);
 const polyList = reactive([]);
 const extruList = reactive([]);
+const bbList = reactive([]);
 const setExtru = ref(0);
 const Area = ref(0);
 const Height = ref(0);
@@ -75,10 +77,29 @@ const clearMeasure = () => {
       polyList.splice(i, 1);
       delete toRaw(polyList[i]);
     }
+    let length3 = bbList.length;
+    for (var i = length3 - 1; i > -1; i--) {
+      toRaw(bbList[i]).delete();
+      bbList.splice(i, 1);
+      delete toRaw(bbList[i]);
+    }
   }
 };
 const mouseClickEvent = (event) => {
   let point = getWorldPosition(event);
+  let Geoobj = {
+    position: point, //坐标
+    name: "zuobiao",
+    url: "src/images/circle.png", //路径
+    scale: 0.5, //比例
+    altitude: 10, //海拔，非必填
+    // imageWidth:0,
+    // imageHeight:0,
+    altitudeMethod: SSmap.AltitudeMethod.Absolute, //Absolute 绝对海拔  OnTerrain 贴地 RelativeToTerrain 贴地并相对海拔
+  };
+  var Billboard = addBillboard(Geoobj);
+  bbList.push(Billboard);
+
   pointList.push(point);
   let la = point.toCartographic().toDegrees();
   if (pointList.length > 0) {

@@ -26,6 +26,7 @@
       <Coordinate />
       <Area />
       <Volume />
+      <Create />
       <!-- <Point></Point> -->
     </div>
   </div>
@@ -36,6 +37,7 @@ import Measurement from "./components/Measurement.vue";
 import Coordinate from "./components/Coordinate.vue";
 import Area from "./components/Area.vue";
 import Volume from "./components/Volume.vue";
+import Create from "./components/Create.vue";
 import { ref, onMounted } from "vue";
 import Web from "./web/index.js";
 import * as Native from "./native/main.js";

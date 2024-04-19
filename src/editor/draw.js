@@ -1,3 +1,36 @@
+//画点
+export function addBillboard(opt) {
+  let url = window.document.location.href;
+  let baseUrl = url.substring(0, url.lastIndexOf("/") + 1);
+  let bbEntity = new SSmap.BillboardEntity();
+  bbEntity.position = opt.position; //坐标
+  bbEntity.scale = opt.scale == undefined ? 1.0 : opt.scale; //比例
+  if (opt.url) {
+    bbEntity.url = baseUrl + opt.url; //图片路径
+  }
+
+  if (opt.imageWidth) {
+    bbEntity.imageWidth = opt.imageWidth; //图片宽度
+  }
+  if (opt.imageHeight) {
+    bbEntity.imageHeight = opt.imageHeight; //图片高度
+  }
+  //海拔
+  if (opt.altitude) {
+    bbEntity.setAltitude(opt.altitude); //海拔值
+  }
+  //海拔模式
+  if (opt.altitudeMethod) {
+    bbEntity.setAltitudeMethod(opt.altitudeMethod);
+  }
+  //设置属性 属性的value只能是字符串类型
+  bbEntity.addProperty("name", "点名称");
+  bbEntity.addProperty("pos", "蛇口红树湾");
+
+  bbEntity.setCollection(SSmap.BillboardCollection.Instance()); //存储到Collection集合中
+  bbEntity.name = opt.name || "Billboardpoint";
+  return bbEntity;
+}
 //画线
 export function drawPolyline(opt) {
   var polyline = new SSmap.Polyline3D();

@@ -17,6 +17,7 @@ import {
   drawLabel,
   drawPolygonGeometry,
   drawPolygon3D,
+  addBillboard,
 } from "../editor/draw.js";
 import { ElMessage } from "element-plus";
 const store = useUsersStore();
@@ -24,6 +25,7 @@ const pointList = reactive([]);
 const threeList = reactive([]);
 const moveList = reactive([]);
 const polyList = reactive([]);
+const bbList = reactive([]);
 const setArea = () => {
   clearMeasure();
   document
@@ -69,12 +71,30 @@ const clearMeasure = () => {
       polyList.splice(i, 1);
       delete toRaw(polyList[i]);
     }
+    let length3 = bbList.length;
+    for (var i = length3 - 1; i > -1; i--) {
+      toRaw(bbList[i]).delete();
+      bbList.splice(i, 1);
+      delete toRaw(bbList[i]);
+    }
   }
 };
 const mouseClickEvent = (event) => {
   let point = getWorldPosition(event);
   pointList.push(point);
   let la = point.toCartographic().toDegrees();
+  let Geoobj = {
+    position: point, //坐标
+    name: "zuobiao",
+    url: "src/images/circle.png", //路径
+    scale: 0.5, //比例
+    altitude: 10, //海拔，非必填
+    // imageWidth:0,
+    // imageHeight:0,
+    altitudeMethod: SSmap.AltitudeMethod.Absolute, //Absolute 绝对海拔  OnTerrain 贴地 RelativeToTerrain 贴地并相对海拔
+  };
+  var Billboard = addBillboard(Geoobj);
+  bbList.push(Billboard);
   if (pointList.length > 0) {
     let obj = {
       width: 3,
@@ -88,7 +108,7 @@ const mouseClickEvent = (event) => {
     let tLine = drawPolyline(obj);
     threeList.push(tLine);
     let area = calSpaceArea(toRaw(pointList));
-
+    // let position = point.toCartesian3().toCartographic();
     document
       .getElementById("qtcanvas")
       .addEventListener("mousemove", mousemoveEvent);
@@ -143,7 +163,7 @@ const mousemoveEvent = (event) => {
     polyList.push(polyGeometry);
   }
 
-  console.log("mousemoveEvent", event.x);
+  //   console.log("mousemoveEvent", event.x);
 };
 const ContextMenuEvent = () => {
   if (pointList.length < 3) return;
