@@ -23,19 +23,43 @@ export function getWorldPosition(event) {
   hit.delete();
   return point;
 }
-//创建球体
-export function createSphere(position, radius, color) {
-  let sphere = new SSmap.Sphere3D();
-  sphere.radii = SSmap.Vector3.create(100.0, 100.0, 100.0);
-  sphere.color = SSmap.Color.fromRgb(0, 255, 0, 255);
-  sphere.position = SSmap.Cartographic.fromDegrees(
-    114.054,
-    22.5324,
-    30.0
-  ).toVector3();
-  sphere.create();
+//获取面积
+export function calSpaceArea(pointArray) {
+  var n = pointArray.length;
+  var area = 0;
 
-  let sphereEntity = sphere.createEntity();
-  sphereEntity.parent = SSmap.Entity.root();
-  Utils.sphere3d = sphereEntity;
+  // 使用 Shoelace 公式计算面积
+  for (var i = 0; i < n; i++) {
+    var j = (i + 1) % n;
+    area += pointArray[i].x * pointArray[j].y;
+    area -= pointArray[j].x * pointArray[i].y;
+  }
+  area = Math.abs(area) / 2;
+
+  return area;
+}
+
+// 计算多边形的中心点
+export function calculatePolygonCenter(vertices) {
+  var centerX = 0;
+  var centerY = 0;
+  var centerZ = 0;
+  let point = null;
+  var n = vertices.length;
+
+  // 计算所有顶点的坐标之和
+  for (var i = 0; i < n; i++) {
+    centerX += vertices[i].x;
+    centerY += vertices[i].y;
+    centerZ += vertices[i].z;
+  }
+
+  // 求平均值
+  centerX /= n;
+  centerY /= n;
+  centerZ /= n;
+
+  // 返回中心点的坐标
+  point = SSmap.Vector3.create(centerX, centerY, centerZ);
+  return point;
 }

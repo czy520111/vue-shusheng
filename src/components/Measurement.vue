@@ -35,6 +35,9 @@ const setLine = () => {
   document
     .getElementById("qtcanvas")
     .addEventListener("contextmenu", ContextMenuEvent);
+  document
+    .getElementById("qtcanvas")
+    .addEventListener("dblclick", dblClickEvent);
   ElMessage.info("左键获取，右键结束");
   // console.log("setLine", store.worldPosition, store.check);
   // pointArr.value.push(store.worldPosition);
@@ -48,6 +51,7 @@ const setLine = () => {
   // }
 };
 const clearMeasure = () => {
+  debugger;
   if (window.entityAllList.length > 0) {
     let length = window.entityAllList.length;
     for (var i = length - 1; i > -1; i--) {
@@ -62,75 +66,61 @@ const mouseClickEvent = (event) => {
   // console.log(e);
   let point = getWorldPosition(event);
   //鼠标左键点击
-  if (event.button == 0) {
-    if (window.pointLineList.length == 0) {
-      window.linedistance = 0; //清空上次测量结果
-    }
+  if (window.pointLineList.length == 0) {
+    window.linedistance = 0; //清空上次测量结果
+  }
 
-    window.pointLineList.push(point); //记录点击的节点坐标
+  window.pointLineList.push(point); //记录点击的节点坐标
 
-    //两个节点确定一条线
-    if (window.pointLineList.length > 1) {
-      var pointArr = new Array();
-      pointArr.push(window.pointLineList[window.pointLineList.length - 2]);
-      pointArr.push(window.pointLineList[window.pointLineList.length - 1]);
-      var polylineObj = {
-        width: 3,
-        alpha: 1,
-        pointArr: pointArr,
-        color: SSmap.Color.fromRgb(83, 255, 26, 255),
-        altitude: SSmap.AltitudeMethod.Absolute,
-        depthTest: false,
-        name: "polyline",
-        // id: "measure",
-      };
-      var polyline = drawPolyline(polylineObj);
-      window.entityAllList.push(polyline);
+  //两个节点确定一条线
+  if (window.pointLineList.length > 1) {
+    var pointArr = new Array();
+    pointArr.push(window.pointLineList[window.pointLineList.length - 2]);
+    pointArr.push(window.pointLineList[window.pointLineList.length - 1]);
+    var polylineObj = {
+      width: 3,
+      alpha: 1,
+      pointArr: pointArr,
+      color: SSmap.Color.fromRgb(83, 255, 26, 255),
+      altitude: SSmap.AltitudeMethod.Absolute,
+      depthTest: false,
+      name: "polyline",
+      // id: "measure",
+    };
+    var polyline = drawPolyline(polylineObj);
+    window.entityAllList.push(polyline);
 
-      //水平距离
-      var distance = SSmap.Cartesian3.distance(
-        window.pointLineList[window.pointLineList.length - 2].toCartesian3(),
-        window.pointLineList[window.pointLineList.length - 1].toCartesian3()
-      ).toFixed(2);
-      //累积多个节点的距离，总长度
-      var opt = {
-        num1: window.linedistance,
-        num2: distance,
-      };
-      window.linedistance = numAdd(opt);
-      //标签
-      var labelObj = {
-        position: point,
-        text: window.linedistance.toFixed(2).toString() + "m",
-        fontSize: 20,
-        fontColor: SSmap.Color.fromRgb(255, 255, 26, 255),
-        translucencyByDistance: SSmap.Vector4.create(30000, 1.0, 1.0e5, 0.7),
-        name: "label",
-        // id: "measure",
-      };
-      debugger;
-      var label3d = addLabel3D(labelObj);
-      window.entityAllList.push(label3d);
-      // let lableEntity = new SSmap.VisualEntity();
-      // lableEntity.addComponent(label3d);
-      // GlobalViewer.scene.addEntity(lableEntity);
-    }
-  } else if (event.button == 2) {
-    if (window.nodeMoveList.length > 0) {
-      window.nodeMoveList[window.nodeMoveList.length - 1].delete(); //删除鼠标移动中前一帧创建的线实体
-    }
-    window.nodeMoveList = [];
-    if (window.laberMoveList.length > 0) {
-      window.laberMoveList[window.laberMoveList.length - 1].delete(); //删除鼠标移动中前一帧创建的线实体
-    }
-    window.laberMoveList = [];
-    window.pointLineList = [];
-    endMeasure();
+    //水平距离
+    var distance = SSmap.Cartesian3.distance(
+      window.pointLineList[window.pointLineList.length - 2].toCartesian3(),
+      window.pointLineList[window.pointLineList.length - 1].toCartesian3()
+    ).toFixed(2);
+    //累积多个节点的距离，总长度
+    var opt = {
+      num1: window.linedistance,
+      num2: distance,
+    };
+    window.linedistance = numAdd(opt);
+    //标签
+    var labelObj = {
+      position: point,
+      text: window.linedistance.toFixed(2).toString() + "m",
+      fontSize: 20,
+      fontColor: SSmap.Color.fromRgb(255, 255, 26, 255),
+      translucencyByDistance: SSmap.Vector4.create(30000, 1.0, 1.0e5, 0.7),
+      name: "label",
+      // id: "measure",
+    };
+    debugger;
+    var label3d = addLabel3D(labelObj);
+    window.entityAllList.push(label3d);
+    // let lableEntity = new SSmap.VisualEntity();
+    // lableEntity.addComponent(label3d);
+    // GlobalViewer.scene.addEntity(lableEntity);
   }
 };
 
 const ContextMenuEvent = () => {
-  debugger;
   if (window.nodeMoveList.length > 0) {
     window.nodeMoveList[window.nodeMoveList.length - 1].delete(); //删除鼠标移动中前一帧创建的线实体
   }
@@ -144,10 +134,27 @@ const ContextMenuEvent = () => {
   endMeasure();
 };
 
+const dblClickEvent = (event) => {
+  var camera = window.GlobalViewer.scene.mainCamera; //获取相机
+
+  var hit = new SSmap.RaycastHit(); //射线投影
+  //鼠标点击的位置，通过相机视角射线获取
+  var ray = camera.screenPointToRay(event.x, event.y);
+  var rayok = window.GlobalViewer.scene.raycast(ray, hit); //判断是否存在
+  var point = 0;
+  if (rayok) {
+    if (hit) {
+      debugger;
+      point = hit.point; //Vector3
+    }
+  }
+  hit.delete();
+};
+
 const endMeasure = () => {
   document
     .getElementById("qtcanvas")
-    .removeEventListener("mouseclick", mouseClickEvent);
+    .removeEventListener("click", mouseClickEvent);
   document.getElementById("qtcanvas").style.cursor = "default";
   document
     .getElementById("qtcanvas")

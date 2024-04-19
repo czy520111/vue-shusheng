@@ -24,6 +24,8 @@
       </ul>
       <Measurement></Measurement>
       <Coordinate />
+      <Area />
+      <Volume />
       <!-- <Point></Point> -->
     </div>
   </div>
@@ -31,7 +33,9 @@
 
 <script setup>
 import Measurement from "./components/Measurement.vue";
-import Coordinate from "./components/coordinate.vue";
+import Coordinate from "./components/Coordinate.vue";
+import Area from "./components/Area.vue";
+import Volume from "./components/Volume.vue";
 import { ref, onMounted } from "vue";
 import Web from "./web/index.js";
 import * as Native from "./native/main.js";
