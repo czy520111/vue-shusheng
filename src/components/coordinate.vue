@@ -5,7 +5,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, toRaw } from "vue";
+import { ref, reactive, toRaw, onUnmounted } from "vue";
 import { useUsersStore } from "../store";
 import { getWorldPosition } from "../editor/math";
 import { ElMessage } from "element-plus";
@@ -35,6 +35,12 @@ const clearMeasure = () => {
       toRaw(pointList[i]).delete();
       pointList.splice(i, 1);
       delete toRaw(pointList[i]);
+    }
+    let length2 = bbList.length;
+    for (var i = length2 - 1; i > -1; i--) {
+      toRaw(bbList[i]).delete();
+      bbList.splice(i, 1);
+      delete toRaw(bbList[i]);
     }
   }
 };
@@ -146,6 +152,10 @@ const ContextMenuEvent = (event) => {
     .getElementById("qtcanvas")
     .removeEventListener("click", getTextEvent);
 };
+
+onUnmounted(() => {
+  clearMeasure();
+});
 </script>
 
 <style lang="scss" scoped>

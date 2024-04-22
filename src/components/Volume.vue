@@ -5,7 +5,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, toRaw } from "vue";
+import { ref, reactive, toRaw, onUnmounted } from "vue";
 import { useUsersStore } from "../store";
 import {
   getWorldPosition,
@@ -319,6 +319,10 @@ const sureVlo = (event) => {
   let polyGeometry = drawPolygonGeometry(polygongeometryObj);
   polyList.push(polyGeometry);
 };
+
+onUnmounted(() => {
+  clearMeasure();
+});
 </script>
 
 <style lang="scss" scoped>

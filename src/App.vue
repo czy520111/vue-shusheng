@@ -22,7 +22,25 @@
           <button class="btn" @click="removeTileset">删除白模</button>
         </li>
       </ul>
-      <Measurement></Measurement>
+      <!-- <div class="meausre"><p>测量</p></div>
+      <el-radio-group @change="changeComponent" v-model="selectedComponent">
+        <el-radio-button label="Measurement">
+          <Measurement />
+        </el-radio-button>
+        <el-radio-button label="Coordinate">
+          <Coordinate />
+        </el-radio-button>
+        <el-radio-button label="Area">
+          <Area />
+        </el-radio-button>
+        <el-radio-button label="Volume">
+          <Volume />
+        </el-radio-button>
+      </el-radio-group> -->
+      <!-- <div>
+        <button @click="toggleComponent">Toggle Component</button>
+      </div> -->
+      <Measurement />
       <Coordinate />
       <Area />
       <Volume />
@@ -40,6 +58,7 @@ import Volume from "./components/Volume.vue";
 import Create from "./components/Create.vue";
 import { ref, onMounted } from "vue";
 import Web from "./web/index.js";
+import { ElRadioGroup, ElRadio, ElRadioButton } from "element-plus";
 import * as Native from "./native/main.js";
 import qtLoader from "../assets/loader.js";
 
@@ -47,6 +66,12 @@ import qtLoader from "../assets/loader.js";
 //   name: "app",
 //   setup() {
 const container = ref(null);
+const selectedComponent = ref("");
+const componentKey = ref(0);
+
+const toggleComponent = () => {
+  componentKey.value++; // 改变 key 值，触发组件重新渲染
+};
 
 const addArcGisImagery = () => {
   Native.addArcGisImagery();
@@ -133,5 +158,8 @@ canvas {
 }
 .ui-wrapper .item .btn + .btn {
   margin-left: 5px;
+}
+.meausre {
+  color: white;
 }
 </style>

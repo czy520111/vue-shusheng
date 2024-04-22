@@ -5,7 +5,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, toRaw } from "vue";
+import { ref, reactive, toRaw, onUnmounted } from "vue";
 import { useUsersStore } from "../store";
 import {
   getWorldPosition,
@@ -235,6 +235,10 @@ const ContextMenuEvent = () => {
   endarea();
   console.log("area", area, center);
 };
+
+onUnmounted(() => {
+  clearMeasure();
+});
 </script>
 
 <style lang="scss" scoped>

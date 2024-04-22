@@ -17,7 +17,7 @@ import {
   isPointOnLine,
 } from "../editor/math";
 import { addBillboard } from "../editor/draw";
-import { ref, reactive, toRaw } from "vue";
+import { ref, reactive, toRaw, onUnmounted } from "vue";
 import { fa, tr } from "element-plus/es/locales.mjs";
 const store = useUsersStore();
 const text = ref("");
@@ -479,6 +479,10 @@ const MouseMoveEvent = (event) => {
     window.nodeMoveList.push(polyline);
   }
 };
+
+onUnmounted(() => {
+  clearMeasure();
+});
 </script>
 
 <style lang="scss" scoped>
