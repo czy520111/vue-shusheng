@@ -66,7 +66,7 @@
             size="small"
             circle
           ></el-button>
-          <b style="margin: 0 12px">{{ floorvalue }}</b>
+          <b style="margin: 0 12px">{{ floorList.length }}</b>
           <el-button
             type="info"
             @click="floorMax"
@@ -90,6 +90,7 @@
           ></el-button>
           <el-input
             v-model="item.input"
+            @change="currentInput(item, index)"
             style="width: 40px"
             placeholder="Please input"
           />
@@ -97,12 +98,24 @@
             @click="addHeight(item, index)"
             :icon="CaretRight"
           ></el-button>
-          <el-button :icon="Delete"></el-button>
+          <el-button
+            @click="currentDelete(item.index)"
+            :icon="Delete"
+          ></el-button>
         </div>
         <!-- <el-icon><CaretLeft /></el-icon> -->
       </div>
-      <div>建筑每层高度(m)</div>
-      <div>建筑总高度(m)</div>
+      <div>
+        建筑每层高度(m)<el-input
+          v-model="peiInput"
+          style="width: 240px"
+          placeholder="Please input"
+        />
+      </div>
+      <div>
+        建筑总高度(m)
+        <p style="color: #000">{{ totalHeight }}</p>
+      </div>
     </div>
   </div>
 </template>
@@ -149,6 +162,8 @@ const inputValue = ref("建筑1");
 const floorvalue = ref(1);
 const floorList = reactive([]); //内部结构数组
 const bulidHeight = ref(3);
+const peiInput = ref(3);
+const totalHeight = ref(3);
 //几何体
 const pointList = reactive([]);
 const threeList = reactive([]);
@@ -177,12 +192,29 @@ const floorMin = () => {
 };
 const floorMax = (index) => {
   floorvalue.value = floorvalue.value + 1;
-  floorList.push({ name: floorList.length + 1 + "层", input: 3 });
+  floorList.push({
+    name: floorList.length + 1 + "层",
+    input: peiInput.value * 1,
+  });
   let obj = {
-    height: 30,
+    height: peiInput.value, //高度
     altitude: floorList.length - 1,
   };
   addFloor(obj);
+};
+const currentDelete = (item, index) => {
+  console.log("currentDelete", item, index);
+  debugger;
+  floorList.splice(index, 1);
+  removeFloor();
+  floorList.forEach((i, index) => {
+    i.name = index + 1 + "层";
+  });
+};
+
+const currentInput = (item, index) => {
+  item.input *= 1;
+  changeHeight(item, index);
 };
 
 const drawBuild = () => {
@@ -233,30 +265,19 @@ const endarea = () => {
   ElMessage.info("左键获取,右键结束");
 };
 const addFloor = (val) => {
-  let exArr = [];
-  pointList.forEach((item) => {
-    exArr.push(toRaw(item).toCartesian3());
-  });
-
-  let polyObj = {
-    height: val.height, ////高度
-    alpha: 1, //透明度
-    pointArr: exArr,
-    color: SSmap.Color.fromRgb(255, 255, 255, 255), //填充颜色
-    name: "pickpolygon",
-    altitude: val.altitude * 30, //建筑的海拔高度
-  };
-  let extru = drawPolygonGeometry(polyObj);
-  floorGeomList.push(extru);
+  redrawExtru();
 };
 const removeFloor = (val) => {
   let lastElement = toRaw(floorGeomList)[toRaw(floorGeomList).length - 1];
   floorGeomList.pop();
   lastElement.delete();
+  redrawExtru();
 };
 const cutHeight = (item, index) => {
+  //   if (floorList.length < 2) return;
   item.input--;
   console.log("cutHeight", item, index);
+  changeHeight(item, index);
 };
 const addHeight = (item, index) => {
   item.input++;
@@ -264,7 +285,37 @@ const addHeight = (item, index) => {
   changeHeight(item, index);
 };
 const changeHeight = (item, index) => {
-  console.log("changeHeight", item, index, floorList);
+  console.log("changeHeight", item, index, floorList, floorGeomList);
+  redrawExtru();
+};
+const redrawExtru = () => {
+  let exArr = [];
+  pointList.forEach((item) => {
+    exArr.push(toRaw(item).toCartesian3());
+  });
+  let length = floorGeomList.length;
+  for (var i = length - 1; i > -1; i--) {
+    toRaw(floorGeomList[i]).delete();
+    floorGeomList.splice(i, 1);
+    delete toRaw(floorGeomList[i]);
+  }
+  let liftHeight = 0;
+  for (let i = 0; i < floorList.length; i++) {
+    let item = floorList[i];
+
+    let obj = {
+      height: item.input * 10, ////高度
+      alpha: 1, //透明度
+      pointArr: exArr,
+      color: SSmap.Color.fromRgb(255, 255, 255, 255), //填充颜色
+      name: "pickpolygon",
+      altitude: liftHeight * 10, //建筑的海拔高度 z轴
+    };
+    liftHeight += item.input;
+    totalHeight.value = liftHeight;
+    let extru = drawPolygonGeometry(obj);
+    floorGeomList.push(extru);
+  }
 };
 const mousemoveEvent = (event) => {
   let point = getWorldPosition(event);
@@ -363,6 +414,7 @@ const ContextMenuEvent = () => {
     altitude: 0 * 30, //建筑的海拔高度
   };
   let extru = drawPolygonGeometry(polyObj);
+  floorGeomList.push(extru);
 
   let length1 = moveList.length;
   for (var i = length1 - 1; i > -1; i--) {

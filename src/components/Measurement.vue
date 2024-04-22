@@ -19,6 +19,7 @@ import {
 import { addBillboard } from "../editor/draw";
 import { ref, reactive, toRaw, onUnmounted } from "vue";
 import { fa, tr } from "element-plus/es/locales.mjs";
+const emit = defineEmits(["clearMeasure"]);
 const store = useUsersStore();
 const text = ref("");
 const check = ref(false);

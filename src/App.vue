@@ -40,7 +40,7 @@
       <!-- <div>
         <button @click="toggleComponent">Toggle Component</button>
       </div> -->
-      <Measurement />
+      <Measurement @clearMeasure="clearMeasure" />
       <Coordinate />
       <Area />
       <Volume />
@@ -72,7 +72,9 @@ const componentKey = ref(0);
 const toggleComponent = () => {
   componentKey.value++; // 改变 key 值，触发组件重新渲染
 };
-
+const clearMeasure = (e) => {
+  console.log("handleCustomEvent", e);
+};
 const addArcGisImagery = () => {
   Native.addArcGisImagery();
 };
