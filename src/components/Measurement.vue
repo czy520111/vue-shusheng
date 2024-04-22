@@ -11,15 +11,25 @@
 <script setup>
 import { ElMessage } from "element-plus";
 import { useUsersStore } from "../store";
-import { getWorldPosition } from "../editor/math";
+import {
+  getWorldPosition,
+  distanceBetweenPoints,
+  isPointOnLine,
+} from "../editor/math";
 import { addBillboard } from "../editor/draw";
-import { ref, reactive } from "vue";
+import { ref, reactive, toRaw } from "vue";
+import { fa, tr } from "element-plus/es/locales.mjs";
 const store = useUsersStore();
 const text = ref("");
 const check = ref(false);
 const idnum = ref(0);
 const pointArr = ref([]);
 const bbList = reactive([]);
+const checkPoint = ref(false);
+const lineList = reactive([]);
+const polyList = reactive([]);
+const labelList = reactive([]);
+const dbPoint = ref(false);
 const setLine = () => {
   clearMeasure();
 
@@ -39,24 +49,30 @@ const setLine = () => {
     .addEventListener("contextmenu", ContextMenuEvent);
 
   ElMessage.info("左键获取，右键结束");
-  // console.log("setLine", store.worldPosition, store.check);
+  // // console.log("setLine", store.worldPosition, store.check);
   // pointArr.value.push(store.worldPosition);
   // if (pointArr.value.length > 1 && check.value) {
   //   debugger;
   //   let end = pointArr[pointArr.length - 1];
   //   let distance = end.distance(store.WorldPosition);
-  //   console.log("distance", distance);
+  //   // console.log("distance", distance);
   // } else {
   //   check.value = false;
   // }
 };
 const clearMeasure = () => {
-  if (window.entityAllList.length > 0) {
+  if (bbList.length > 0) {
     let length = window.entityAllList.length;
     for (var i = length - 1; i > -1; i--) {
       window.entityAllList[i].delete();
       window.entityAllList.splice(i, 1);
       delete window.entityAllList[i];
+    }
+    let length2 = labelList.length;
+    for (var i = length2 - 1; i > -1; i--) {
+      toRaw(labelList[i]).delete();
+      labelList.splice(i, 1);
+      delete toRaw(labelList[i]);
     }
     let length3 = bbList.length;
     for (var i = length3 - 1; i > -1; i--) {
@@ -64,11 +80,17 @@ const clearMeasure = () => {
       bbList.splice(i, 1);
       delete toRaw(bbList[i]);
     }
+    let length1 = polyList.length;
+    for (var i = length1 - 1; i > -1; i--) {
+      toRaw(polyList[i]).delete();
+      polyList.splice(i, 1);
+      delete toRaw(polyList[i]);
+    }
   }
 };
 
 const mouseClickEvent = (event) => {
-  // console.log(e);
+  // // console.log(e);
   let point = getWorldPosition(event);
   //鼠标左键点击
   if (window.pointLineList.length == 0) {
@@ -83,11 +105,13 @@ const mouseClickEvent = (event) => {
     url: "src/images/circle.png", //路径
     scale: 0.5, //比例
     altitude: 10, //海拔，非必填
+
     // imageWidth:0,
     // imageHeight:0,
     altitudeMethod: SSmap.AltitudeMethod.Absolute, //Absolute 绝对海拔  OnTerrain 贴地 RelativeToTerrain 贴地并相对海拔
   };
   var Billboard = addBillboard(Geoobj);
+  Billboard.objectName = "bill";
   bbList.push(Billboard);
 
   //两个节点确定一条线
@@ -107,7 +131,7 @@ const mouseClickEvent = (event) => {
     };
     var polyline = drawPolyline(polylineObj);
     window.entityAllList.push(polyline);
-
+    lineList.push(polyline);
     //水平距离
     var distance = SSmap.Cartesian3.distance(
       window.pointLineList[window.pointLineList.length - 2].toCartesian3(),
@@ -149,15 +173,175 @@ const ContextMenuEvent = () => {
   window.pointLineList = [];
   document.getElementById("qtcanvas").style.cursor = "default";
   endMeasure();
+  updataLine();
+  document.getElementById("qtcanvas").addEventListener("mousedown", mouseDown);
+  document.getElementById("qtcanvas").addEventListener("mouseup", mouseUp);
 };
 
 const dblClickEvent = (event) => {
   let feature = window.GlobalViewer.scene.getFeatureByMouse();
+  let point = getWorldPosition(event);
   if (feature) {
     if (feature.parent.objectName == "polyline") {
-      console.log("获取线图层属性", feature);
+      // console.log("获取线图层属性", feature);
+      let Geoobj = {
+        position: point, //坐标
+        name: "zuobiao",
+        url: "src/images/circle.png", //路径
+        scale: 0.5, //比例
+        altitude: 10, //海拔，非必填
+
+        // imageWidth:0,
+        // imageHeight:0,
+        altitudeMethod: SSmap.AltitudeMethod.Absolute, //Absolute 绝对海拔  OnTerrain 贴地 RelativeToTerrain 贴地并相对海拔
+      };
+      // console.log(polyList, 555);
+
+      let originalLength = bbList.length; // 保存原始长度
+
+      for (let i = 1; i < originalLength; i++) {
+        let p1 = toRaw(bbList[i - 1]).position;
+        let p2 = toRaw(bbList[i]).position;
+        let p3 = point;
+        let result = isPointOnLine(p3, p1, p2, 30);
+        if (result) {
+          // console.log(i, "789789");
+          var Billboard = addBillboard(Geoobj);
+          Billboard.objectName = "bill";
+          bbList.splice(i, 0, Billboard);
+          originalLength++; // 每次插入一个元素，原始长度加一
+          updataLine();
+          return;
+        }
+      }
+    } else if (feature.parent.objectName == "bill") {
+      // console.log("获取点图层属性", feature);
     }
   }
+};
+let mouseMoveListener = null;
+const mouseDown = (e) => {
+  // console.log("mouseDown");
+  let point = getWorldPosition(e);
+  let feature = window.GlobalViewer.scene.getFeatureByMouse();
+  if (feature?.parent.objectName == "bill") {
+    checkPoint.value = true;
+    let position = feature.parent.position;
+    if (mouseMoveListener) {
+      document
+        .getElementById("qtcanvas")
+        .removeEventListener("mousemove", mouseMoveListener);
+    }
+    mouseMoveListener = (e) => movePoint(e, feature);
+    document
+      .getElementById("qtcanvas")
+      .addEventListener("mousemove", mouseMoveListener);
+    // console.log("获取点图层属性", feature);
+  }
+};
+
+const mouseUp = (e) => {
+  // console.log("mouseUp");
+  checkPoint.value = false;
+  document.getElementById("qtcanvas").style.cursor = "default";
+  let cameraCtrl = GlobalViewer.scene.mainCamera.cameraController();
+  cameraCtrl.enableInputs = true;
+  // console.log(lineList, "+++", bbList);
+  updataLine();
+  if (mouseMoveListener) {
+    document
+      .getElementById("qtcanvas")
+      .removeEventListener("mousemove", mouseMoveListener);
+    mouseMoveListener = null; // 置空变量
+  }
+  document
+    .getElementById("qtcanvas")
+    .removeEventListener("mousedown", mouseDown);
+  document.getElementById("qtcanvas").addEventListener("mousedown", setPoint);
+};
+
+const movePoint = (e, feature) => {
+  if (checkPoint.value == false) return;
+  document.getElementById("qtcanvas").style.cursor = "pointer";
+  let cameraCtrl = GlobalViewer.scene.mainCamera.cameraController();
+  cameraCtrl.enableInputs = false;
+  let newPosition = getWorldPosition(e);
+  feature.parent.position = newPosition;
+  updataLine();
+};
+
+const setPoint = (e) => {
+  let feature = window.GlobalViewer.scene.getFeatureByMouse();
+  if (feature?.parent.objectName == "bill") {
+    mouseDown(e);
+  }
+};
+
+const updataLine = () => {
+  let pointList = [];
+  let length3 = labelList.length;
+  for (var i = length3 - 1; i > -1; i--) {
+    toRaw(labelList[i]).delete();
+    labelList.splice(i, 1);
+    delete toRaw(labelList[i]);
+  }
+  let total = 0;
+  for (let i = 1; i < bbList.length; i++) {
+    total += distanceBetweenPoints(
+      toRaw(bbList[i - 1]).position,
+      toRaw(bbList[i]).position
+    );
+    var labelObj = {
+      position: toRaw(bbList[i]).position,
+      text: total.toFixed(2).toString() + "m",
+      fontSize: 20,
+      fontColor: SSmap.Color.fromRgb(255, 255, 26, 255),
+      translucencyByDistance: SSmap.Vector4.create(30000, 1.0, 1.0e5, 0.7),
+      name: "label",
+      // id: "measure",
+    };
+    var label3d = addLabel3D(labelObj);
+    labelList.push(label3d);
+  }
+  bbList.forEach((item) => {
+    pointList.push(toRaw(item).position);
+    var labelObj = {
+      position: toRaw(item).position,
+      text: total.toFixed(2).toString() + "m",
+      fontSize: 20,
+      fontColor: SSmap.Color.fromRgb(255, 255, 26, 255),
+      translucencyByDistance: SSmap.Vector4.create(30000, 1.0, 1.0e5, 0.7),
+      name: "label",
+      // id: "measure",
+    };
+  });
+
+  // console.log(labelList, "777", total);
+  let polylineObj = {
+    width: 3,
+    alpha: 1,
+    pointArr: pointList,
+    color: SSmap.Color.fromRgb(83, 255, 26, 255),
+    altitude: SSmap.AltitudeMethod.Absolute,
+    depthTest: false,
+    name: "polyline",
+    // id: "measure",
+  };
+  let length = window.entityAllList.length;
+  for (var i = length - 1; i > -1; i--) {
+    window.entityAllList[i].delete();
+    window.entityAllList.splice(i, 1);
+    delete window.entityAllList[i];
+  }
+  let length1 = polyList.length;
+  for (var i = length1 - 1; i > -1; i--) {
+    toRaw(polyList[i]).delete();
+    polyList.splice(i, 1);
+    delete toRaw(polyList[i]);
+  }
+
+  let polyline = drawPolyline(polylineObj);
+  polyList.push(polyline);
 };
 
 const endMeasure = () => {
@@ -266,7 +450,7 @@ const addLabel3D = (opt) => {
 };
 
 const MouseMoveEvent = (event) => {
-  // console.log(e);
+  // // console.log(e);
   let point = getWorldPosition(event);
 
   if (window.nodeMoveList.length > 0) {

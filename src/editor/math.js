@@ -6,6 +6,39 @@ export function distanceBetweenPoints(point1, point2) {
 
   return Math.sqrt(dx * dx + dy * dy + dz * dz);
 }
+
+//点是否在线上
+export function isPointOnLine(point, start, end, lineWidth) {
+  // 计算线段的参数方程
+  const t =
+    ((point.x - start.x) * (end.x - start.x) +
+      (point.y - start.y) * (end.y - start.y) +
+      (point.z - start.z) * (end.z - start.z)) /
+    ((end.x - start.x) ** 2 + (end.y - start.y) ** 2 + (end.z - start.z) ** 2);
+
+  // 判断点是否在线段的范围内
+  if (t >= 0 && t <= 1) {
+    // 计算点到直线的距离
+    const distance =
+      Math.abs(
+        (end.y - start.y) * (start.z - point.z) -
+          (end.z - start.z) * (start.y - point.y) +
+          ((end.z - start.z) * (start.x - point.x) -
+            (end.x - start.x) * (start.z - point.z)) +
+          ((end.x - start.x) * (start.y - point.y) -
+            (end.y - start.y) * (start.x - point.x))
+      ) /
+      Math.sqrt(
+        (end.x - start.x) ** 2 + (end.y - start.y) ** 2 + (end.z - start.z) ** 2
+      );
+    // 判断点到直线的距离是否小于线段的宽度
+    if (distance <= lineWidth) {
+      return true; // 点在线段上
+    }
+  }
+
+  return false; // 点不在线段上
+}
 //获取世界坐标
 export function getWorldPosition(event) {
   var camera = window.GlobalViewer.scene.mainCamera; //获取相机

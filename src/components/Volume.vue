@@ -28,6 +28,7 @@ const polyList = reactive([]);
 const extruList = reactive([]);
 const bbList = reactive([]);
 const setExtru = ref(0);
+const referHeight = ref(0);
 const Area = ref(0);
 const Height = ref(0);
 const setArea = () => {
@@ -178,9 +179,10 @@ const mousemoveEvent = (event) => {
   console.log("mousemoveEvent", event.x);
 };
 const clearState = () => {};
-const ContextMenuEvent = () => {
+const ContextMenuEvent = (e) => {
   if (pointList.length < 3) return;
-
+  console.log(e, "e");
+  referHeight.value = e.y;
   console.log("ContextMenuEvent");
   pointList.push(pointList[0]);
   let obj = {
@@ -265,7 +267,6 @@ const sureClick = () => {
   //   Height.value = height;
   let center = calculatePolygonCenter(toRaw(pointList));
   //   center.y *= 2;
-  debugger;
   let text = Height.value * Area.value;
   let labelObj = {
     // labelHeight: 800,
@@ -296,6 +297,7 @@ const sureClick = () => {
 const sureVlo = (event) => {
   let point = getWorldPosition(event).toCartesian3().toCartographic(); //转换为经纬度
   Height.value = Number(point.height.toFixed(2));
+  let bHeight = referHeight.value - event.y;
   console.log(point.height, "666666", event.x, event.y);
   if (polyList.length > 0) {
     toRaw(polyList)[polyList.length - 1].delete(); //删除鼠标移动中前一帧创建的面实体
@@ -307,7 +309,7 @@ const sureVlo = (event) => {
   });
 
   let polygongeometryObj = {
-    height: point.height,
+    height: bHeight * 10,
     alpha: 0.8,
     pointArr: exArr,
     color: SSmap.Color.fromRgb(83, 255, 26, 255),
