@@ -147,7 +147,7 @@ const showInfo = ref(false);
 const geoList = reactive([]);
 const inputValue = ref("建筑1");
 const floorvalue = ref(1);
-const floorList = reactive([]);
+const floorList = reactive([]); //内部结构数组
 const bulidHeight = ref(3);
 //几何体
 const pointList = reactive([]);
@@ -261,6 +261,10 @@ const cutHeight = (item, index) => {
 const addHeight = (item, index) => {
   item.input++;
   console.log("addHeight", item, index);
+  changeHeight(item, index);
+};
+const changeHeight = (item, index) => {
+  console.log("changeHeight", item, index, floorList);
 };
 const mousemoveEvent = (event) => {
   let point = getWorldPosition(event);
