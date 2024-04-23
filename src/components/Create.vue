@@ -18,8 +18,22 @@
             <el-button @click="openDraw" :icon="CirclePlusFilled" circle />
           </el-tooltip>
           <el-tooltip content="删除" placement="top">
-            <el-button :icon="DeleteFilled" circle />
+            <el-button @click="deleteBuild" :icon="DeleteFilled" circle />
           </el-tooltip>
+          <el-dialog
+            v-model="dialogVisible"
+            title="提示"
+            width="500"
+            :before-close="handleClose"
+          >
+            <span>此操作将永久删除建筑,是否继续?</span>
+            <template #footer>
+              <div class="dialog-footer">
+                <el-button @click="dialogVisible = false">取消</el-button>
+                <el-button type="primary" @click="sureDelete"> 确定 </el-button>
+              </div>
+            </template>
+          </el-dialog>
         </div>
       </div>
       <div class="content-info">
@@ -171,6 +185,7 @@ import {
 } from "../editor/draw.js";
 
 const showContent = ref(false);
+const dialogVisible = ref(false);
 const showInfo = ref(false);
 const geoList = reactive([]); //外部结构数组
 const inputValue = ref("建筑1");
@@ -218,6 +233,28 @@ const closeBuilid = () => {
   showInfo.value = false;
 };
 
+const deleteBuild = () => {
+  console.log("allGeoList", allGeoList, geoList);
+  dialogVisible.value = true;
+};
+
+const sureDelete = () => {
+  for (let i = 0; i < geoList.length; i++) {
+    let geometry = geoList[i];
+    if (geometry.checked) {
+      geoList.splice(i, 1);
+      i--;
+      let length = geometry.geo.length;
+      for (var j = length - 1; j > -1; j--) {
+        toRaw(geometry.geo[j]).delete();
+        geometry.geo.splice(j, 1);
+        delete toRaw(geometry.geo[j]);
+      }
+    }
+  }
+  dialogVisible.value = false;
+};
+
 const addList = () => {
   if (!showInfo.value) {
     ElMessage.info("当前没有可保存的建筑");
@@ -238,6 +275,7 @@ const addList = () => {
       geo: [...floorGeomList],
       position: { ...centerPoint },
       allPointList: allPointList,
+      pointList: [...pointList],
     });
   }
 };
@@ -323,11 +361,11 @@ const vector3Offset = (point, { offsetX = 0, offsetY = 0, offsetZ = 0 }) => {
 
 const moveGeo = (item, index) => {
   console.log("moveGeo", item, index);
-  // document.getElementById("qtcanvas").style.cursor = "crosshair";
-  // document.getElementById("qtcanvas").addEventListener("click", (e) => {
-  //   moveExtru(e, item, index);
-  // });
-  // moveBuild.value = true;
+  document.getElementById("qtcanvas").style.cursor = "crosshair";
+  document.getElementById("qtcanvas").addEventListener("click", (e) => {
+    moveExtru(e, item, index);
+  });
+  moveBuild.value = true;
   ElMessage.info("屏幕选取点移动建筑");
 };
 
@@ -339,7 +377,10 @@ const moveExtru = (e, item, index) => {
   let centerX = toRaw(item).position._rawValue.x;
   let centerY = toRaw(item).position._rawValue.y;
   let centerZ = toRaw(item).position._rawValue.z;
-  // let selfPoint = ellipsoid.eastNorthUpToFixedFrame(point);
+  // pointList.length = 0;
+  // item.pointList.forEach((i) => {
+  //   pointList.push(i);
+  // });
   let newVertices = recomputeVertices(
     centerX,
     centerY,
