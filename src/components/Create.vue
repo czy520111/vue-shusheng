@@ -214,7 +214,7 @@ const closeBuilid = () => {
   //     floorGeomList.push(i);
   //   });
   // }
-  redrawExtru();
+  reSave();
   showInfo.value = false;
 };
 
@@ -615,6 +615,12 @@ const ContextMenuEvent = () => {
   centerPoint.value = center;
   let tLine = drawPolyline(obj);
   threeList.push(tLine);
+  let length = threeList.length;
+  for (var i = length - 1; i > -1; i--) {
+    toRaw(threeList[i]).delete();
+    threeList.splice(i, 1);
+    delete toRaw(threeList[i]);
+  }
   let pointArr = [];
   pointList.forEach((item) => {
     // point.toCartesian3().toCartographic()
