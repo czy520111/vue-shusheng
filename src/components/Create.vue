@@ -28,14 +28,26 @@
             <p>{{ item.name }}</p>
             <div>
               <el-tooltip content="定位" placement="top">
-                <el-button :icon="LocationInformation" circle />
+                <el-button
+                  @click="goPosition(item, index)"
+                  :icon="LocationInformation"
+                  circle
+                />
                 <!-- <el-icon><LocationInformation /></el-icon> -->
               </el-tooltip>
               <el-tooltip content="编辑" placement="top">
-                <el-button :icon="EditPen" circle />
+                <el-button
+                  @click="editCurrentGeo(item, index)"
+                  :icon="EditPen"
+                  circle
+                />
               </el-tooltip>
               <el-tooltip content="移动" placement="top">
-                <el-button :icon="Rank" circle />
+                <el-button
+                  @click.stop="moveGeo(item, index)"
+                  :icon="Rank"
+                  circle
+                />
               </el-tooltip>
               <el-checkbox
                 style="margin-left: 12px"
@@ -50,7 +62,7 @@
 
     <div class="open-build" v-if="showInfo">
       <p>建筑名称</p>
-      <el-button @click="showInfo = false" :icon="Close"></el-button>
+      <el-button @click="closeBuilid" :icon="Close"></el-button>
       <el-input
         v-model="inputValue"
         style="width: 240px"
@@ -146,6 +158,9 @@ import {
   getWorldPosition,
   calSpaceArea,
   calculatePolygonCenter,
+  compareArrays,
+  recomputeVertices,
+  addcomputeVertices,
 } from "../editor/math.js";
 
 import {
@@ -157,26 +172,206 @@ import {
 
 const showContent = ref(false);
 const showInfo = ref(false);
-const geoList = reactive([]);
+const geoList = reactive([]); //外部结构数组
 const inputValue = ref("建筑1");
 const floorvalue = ref(1);
 const floorList = reactive([]); //内部结构数组
 const bulidHeight = ref(3);
 const peiInput = ref(3);
 const totalHeight = ref(3);
+const centerPoint = ref(null);
+const editBUtton = ref(false);
+const checkEdit = ref(0);
+const cloneFloorList = reactive([]);
+const cloneGeoList = reactive([]);
+const moveBuild = ref(false);
 //几何体
 const pointList = reactive([]);
 const threeList = reactive([]);
 const moveList = reactive([]);
 const polyList = reactive([]);
 const floorGeomList = reactive([]);
+const allGeoList = reactive([]); //所有创建几何体的集合
+const allPointList = reactive([]); //所有创建几何体形状点位的集合
+
+const closeBuilid = () => {
+  console.log(
+    "closeBuilid",
+    floorGeomList,
+    pointList,
+    floorList,
+    cloneFloorList
+  );
+  // let result = compareArrays(cloneFloorList, floorList);
+  // if (!result) {
+  //   floorList.length = 0;
+  //   floorGeomList.length = 0;
+
+  //   cloneFloorList.forEach((i) => {
+  //     floorList.push(i);
+  //   });
+  //   cloneGeoList.forEach((i) => {
+  //     floorGeomList.push(i);
+  //   });
+  // }
+  redrawExtru();
+  showInfo.value = false;
+};
 
 const addList = () => {
-  inputValue.value = "建筑" + (geoList.length + 1);
-  geoList.unshift({ name: "建筑" + (geoList.length + 1), checked: false });
+  if (!showInfo.value) {
+    ElMessage.info("当前没有可保存的建筑");
+    return;
+  }
+  if (editBUtton.value) {
+    reSave();
+    editBUtton.value = false;
+  } else {
+    showInfo.value = false;
+    allGeoList.unshift([...floorGeomList]);
+    allPointList.unshift([...pointList]);
+    inputValue.value = "建筑" + (geoList.length + 1);
+    geoList.unshift({
+      name: "建筑" + (geoList.length + 1),
+      checked: false,
+      edit: [...floorList],
+      geo: [...floorGeomList],
+      position: { ...centerPoint },
+      allPointList: allPointList,
+    });
+  }
 };
+const reSave = () => {
+  // debugger;
+  allGeoList[checkEdit.value] = [...floorGeomList];
+  allPointList[checkEdit.value] = [...pointList];
+  geoList[checkEdit.value].edit = [...floorList];
+  geoList[checkEdit.value].geo = [...floorGeomList];
+  // geoList[checkEdit.value].position = { ...centerPoint };
+  geoList[checkEdit.value].allPointList = allPointList;
+  showInfo.value = false;
+
+  // allGeoList.unshift([...floorGeomList]);
+  // allPointList.unshift([...pointList]);
+  // inputValue.value = "建筑" + (geoList.length + 1);
+  // geoList.unshift({
+  //   name: "建筑" + (geoList.length + 1),
+  //   checked: false,
+  //   edit: [...floorList],
+  //   geo: [...floorGeomList],
+  //   position: { ...centerPoint },
+  //   allPointList: allPointList,
+  // });
+};
+const goPosition = (item, index) => {
+  if (showInfo.value) {
+    ElMessage.info("建筑正在编辑中");
+    return;
+  }
+  let position =
+    toRaw(item)
+      .position._rawValue.toCartesian3()
+      .toCartographic()
+      .toDegrees() || {};
+  let opt = {
+    lat: position.lat || 22.540745, //纬度
+    lng: position.lon || 114.054494, //经度
+    alt: position.height || 5, //高度
+    pitch: -80, //俯仰角
+    distance: 1000, //观察点到目标点的直线距离
+  };
+  console.log("goPosition", item, index, opt);
+  flyTopoint(opt);
+};
+const flyTopoint = (opt) => {
+  let point = SSmap.Cartesian3.fromDegrees(
+    opt.lng,
+    opt.lat,
+    opt.alt
+  ).toVector3();
+  let distance = opt.distance || 500;
+  //利用三角函数，根据500米距离和俯仰角（opt.pitch）计算正北方向 观察点（相机）的偏移值
+  let Yoffset = Math.sin(((90 + opt.pitch) * Math.PI) / 180) * distance;
+  let Zoffset = Math.cos(((90 + opt.pitch) * Math.PI) / 180) * distance;
+
+  //根据上述偏移值，重新获取偏移后的坐标（相机位置）
+  let destination = vector3Offset(point, {
+    offsetY: -Yoffset,
+    offsetZ: Zoffset,
+  });
+  //定位
+  window.GlobalViewer.scene.mainCamera.cameraController().flyTo(
+    destination,
+    3, //飞行时间
+    Number(0), //不能改 0为正北方向
+    Number(opt.pitch), //
+    Number(0) //不能改
+  );
+};
+
+const vector3Offset = (point, { offsetX = 0, offsetY = 0, offsetZ = 0 }) => {
+  if (GlobalViewer) {
+    let vec3 = SSmap.Vector3.create(offsetX, offsetY, offsetZ);
+    let localToWorld =
+      GlobalViewer.scene.globe.ellipsoid.eastNorthUpToFixedFrame(
+        point.toCartesian3()
+      );
+    let newPoint = SSmap.Matrix4.multiplyByVector3(localToWorld, vec3);
+    return newPoint;
+  }
+};
+
+const moveGeo = (item, index) => {
+  console.log("moveGeo", item, index);
+  // document.getElementById("qtcanvas").style.cursor = "crosshair";
+  // document.getElementById("qtcanvas").addEventListener("click", (e) => {
+  //   moveExtru(e, item, index);
+  // });
+  // moveBuild.value = true;
+  ElMessage.info("屏幕选取点移动建筑");
+};
+
+const moveExtru = (e, item, index) => {
+  if (!moveBuild.value) return;
+  let point = getWorldPosition(e);
+  let scene = GlobalViewer.scene;
+  let ellipsoid = scene.globe.ellipsoid;
+  let centerX = toRaw(item).position._rawValue.x;
+  let centerY = toRaw(item).position._rawValue.y;
+  let centerZ = toRaw(item).position._rawValue.z;
+  // let selfPoint = ellipsoid.eastNorthUpToFixedFrame(point);
+  let newVertices = recomputeVertices(
+    centerX,
+    centerY,
+    centerZ,
+    toRaw(pointList)
+  );
+  let nowList = addcomputeVertices(point.x, point.y, point.z, newVertices);
+  nowList.forEach((i, index) => {
+    toRaw(pointList[index]).x = i.x;
+    toRaw(pointList[index]).y = i.y;
+    toRaw(pointList[index]).z = i.z;
+  });
+  let center = calculatePolygonCenter(toRaw(pointList));
+  // centerPoint.value = center;
+  toRaw(item).position._rawValue.x = center.x;
+  toRaw(item).position._rawValue.y = center.y;
+  toRaw(item).position._rawValue.z = center.z;
+  if (moveBuild.value) {
+    redrawExtru();
+    ElMessage.info("移动建筑成功");
+    document.getElementById("qtcanvas").removeEventListener("click", moveExtru);
+    document.getElementById("qtcanvas").style.cursor = "default";
+  }
+
+  moveBuild.value = false;
+};
+
 const openDraw = () => {
   showInfo.value = true;
+  floorList.length = 0;
+  pointList.length = 0;
+  floorGeomList.length = 0;
   floorList.push({ name: floorList.length + 1 + "层", input: 3 });
   drawBuild();
 };
@@ -204,7 +399,6 @@ const floorMax = (index) => {
 };
 const currentDelete = (item, index) => {
   console.log("currentDelete", item, index);
-  debugger;
   floorList.splice(index, 1);
   removeFloor();
   floorList.forEach((i, index) => {
@@ -213,6 +407,11 @@ const currentDelete = (item, index) => {
 };
 
 const currentInput = (item, index) => {
+  if (!/^\d*\.?\d*$/.test(item.input) || item.input <= 0) {
+    ElMessage.error("请输入大于0数字");
+    item.input = 3;
+    // return;
+  }
   item.input *= 1;
   changeHeight(item, index);
 };
@@ -290,9 +489,11 @@ const changeHeight = (item, index) => {
 };
 const redrawExtru = () => {
   let exArr = [];
+  console.log("redrawExtru", pointList, allPointList);
   pointList.forEach((item) => {
     exArr.push(toRaw(item).toCartesian3());
   });
+
   let length = floorGeomList.length;
   for (var i = length - 1; i > -1; i--) {
     toRaw(floorGeomList[i]).delete();
@@ -317,6 +518,37 @@ const redrawExtru = () => {
     floorGeomList.push(extru);
   }
 };
+const editCurrentGeo = (item, index) => {
+  editBUtton.value = true;
+  if (showInfo.value) {
+    ElMessage.info("建筑正在编辑中");
+    return;
+  }
+  // cloneFloorList = [...floorList];
+  // cloneGeoList = [...floorGeomList];
+  checkEdit.value = index;
+  floorList.length = 0;
+  pointList.length = 0;
+  floorGeomList.length = 0;
+  cloneFloorList.length = 0;
+  cloneGeoList.length = 0;
+  console.log("editCurrentGeo", item, index);
+  let pointArr = item.allPointList[index];
+  let geoList = item.geo;
+  toRaw(item.edit).forEach((i) => {
+    floorList.push(i);
+    cloneFloorList.push(i);
+  });
+  pointArr.forEach((i) => {
+    pointList.push(i);
+  });
+  geoList.forEach((i) => {
+    floorGeomList.push(i);
+    cloneGeoList.push(i);
+  });
+  showInfo.value = true;
+};
+
 const mousemoveEvent = (event) => {
   let point = getWorldPosition(event);
   if (moveList.length > 0) {
@@ -379,6 +611,8 @@ const ContextMenuEvent = () => {
     depthTest: false,
     name: "polyline",
   };
+  let center = calculatePolygonCenter(toRaw(pointList));
+  centerPoint.value = center;
   let tLine = drawPolyline(obj);
   threeList.push(tLine);
   let pointArr = [];

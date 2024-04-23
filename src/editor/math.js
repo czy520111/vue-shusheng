@@ -96,3 +96,43 @@ export function calculatePolygonCenter(vertices) {
   point = SSmap.Vector3.create(centerX, centerY, centerZ);
   return point;
 }
+//比较数组的值
+export function compareArrays(arr1, arr2) {
+  const set1 = new Set(arr1);
+  const set2 = new Set(arr2);
+
+  if (set1.size !== set2.size) {
+    return false; // 数组长度不同，值必然不同
+  }
+
+  for (const item of set1) {
+    if (!set2.has(item)) {
+      return false; // 发现不同的值
+    }
+  }
+
+  return true; // 没有发现不同的值，数组相同
+}
+
+// 重新计算顶点坐标
+export function recomputeVertices(centerX, centerY, centerZ, vertices) {
+  const newVertices = [];
+  for (const vertex of vertices) {
+    const newX = vertex.x - centerX;
+    const newY = vertex.y - centerY;
+    const newZ = vertex.z - centerZ;
+    newVertices.push({ x: newX, y: newY, z: newZ });
+  }
+  return newVertices;
+}
+//重新加位置坐标
+export function addcomputeVertices(centerX, centerY, centerZ, vertices) {
+  const newVertices = [];
+  for (const vertex of vertices) {
+    const newX = vertex.x + centerX;
+    const newY = vertex.y + centerY;
+    const newZ = vertex.z + centerZ;
+    newVertices.push({ x: newX, y: newY, z: newZ });
+  }
+  return newVertices;
+}
