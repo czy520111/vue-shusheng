@@ -377,6 +377,25 @@ const moveExtru = (e, item, index) => {
   let centerX = toRaw(item).position._rawValue.x;
   let centerY = toRaw(item).position._rawValue.y;
   let centerZ = toRaw(item).position._rawValue.z;
+  pointList.length = 0;
+  // floorGeomList.length = 0;
+  floorList.length = 0;
+  // let length = floorGeomList.length;
+  // for (var i = length - 1; i > -1; i--) {
+  //   toRaw(floorGeomList[i]).delete();
+  //   floorGeomList.splice(i, 1);
+  //   delete toRaw(floorGeomList[i]);
+  // }
+  // pointList = toRaw(geoList[index]).pointList;
+  toRaw(geoList[index]).pointList.forEach((i) => {
+    pointList.push(toRaw(i));
+  });
+  // toRaw(geoList[index]).geo.forEach((i) => {
+  //   floorGeomList.push(toRaw(i));
+  // });
+  toRaw(item.edit).forEach((i) => {
+    floorList.push(i);
+  });
   // pointList.length = 0;
   // item.pointList.forEach((i) => {
   //   pointList.push(i);
@@ -399,7 +418,7 @@ const moveExtru = (e, item, index) => {
   toRaw(item).position._rawValue.y = center.y;
   toRaw(item).position._rawValue.z = center.z;
   if (moveBuild.value) {
-    redrawExtru();
+    redrawExtru(index);
     ElMessage.info("移动建筑成功");
     document.getElementById("qtcanvas").removeEventListener("click", moveExtru);
     document.getElementById("qtcanvas").style.cursor = "default";
@@ -528,9 +547,19 @@ const changeHeight = (item, index) => {
   console.log("changeHeight", item, index, floorList, floorGeomList);
   redrawExtru();
 };
-const redrawExtru = () => {
+const redrawExtru = (number) => {
   let exArr = [];
   console.log("redrawExtru", pointList, allPointList);
+  // if (number) {
+  //   floorGeomList.length = 0;
+  //   // pointList.length = 0;
+  //   // geoList[number].pointList.forEach((i) => {
+  //   //   pointList.push(i);
+  //   // });
+  //   geoList[number].geo.forEach((i) => {
+  //     floorGeomList.push(i);
+  //   });
+  // }
   pointList.forEach((item) => {
     exArr.push(toRaw(item).toCartesian3());
   });
@@ -571,6 +600,12 @@ const editCurrentGeo = (item, index) => {
   floorList.length = 0;
   pointList.length = 0;
   floorGeomList.length = 0;
+  // let length = floorGeomList.length;
+  // for (var i = length - 1; i > -1; i--) {
+  //   toRaw(floorGeomList[i]).delete();
+  //   floorGeomList.splice(i, 1);
+  //   delete toRaw(floorGeomList[i]);
+  // }
   cloneFloorList.length = 0;
   cloneGeoList.length = 0;
   console.log("editCurrentGeo", item, index);
@@ -587,6 +622,7 @@ const editCurrentGeo = (item, index) => {
     floorGeomList.push(i);
     cloneGeoList.push(i);
   });
+
   showInfo.value = true;
 };
 
@@ -714,7 +750,7 @@ const ContextMenuEvent = () => {
 };
 
 onMounted(() => {
-  geoList.unshift({ name: "建筑1", checked: false });
+  // geoList.unshift({ name: "建筑1", checked: false });
 });
 </script>
 
