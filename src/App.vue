@@ -21,6 +21,9 @@
           <button class="btn" @click="addTileset">加载白模</button>
           <button class="btn" @click="removeTileset">删除白模</button>
         </li>
+        <li class="item">
+          <Custom />
+        </li>
       </ul>
       <!-- <div class="meausre"><p>测量</p></div>
       <el-radio-group @change="changeComponent" v-model="selectedComponent">
@@ -45,6 +48,7 @@
       <Area />
       <Volume />
       <Create />
+
       <!-- <Point></Point> -->
     </div>
   </div>
@@ -56,6 +60,7 @@ import Coordinate from "./components/Coordinate.vue";
 import Area from "./components/Area.vue";
 import Volume from "./components/Volume.vue";
 import Create from "./components/Create.vue";
+import Custom from "./components/Custom.vue";
 import { ref, onMounted } from "vue";
 import Web from "./web/index.js";
 import { ElRadioGroup, ElRadio, ElRadioButton } from "element-plus";
@@ -105,6 +110,7 @@ onMounted(() => {
     // 设置视图全局变量
     window.GlobalViewer = GlobalViewer;
     window.SSmap = SSmap;
+    window.scene = GlobalViewer.scene;
 
     // 浏览器环境全局变量
     window.isWeb = true;

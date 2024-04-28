@@ -84,23 +84,33 @@ export const Terrain = {
  */
 export const Tileset = {
   add(options) {
-    if (cache.tileset) {
-      return;
-    }
-
+    // debugger;
+    // if (cache.tileset) {
+    //   return;
+    // }
     let scene = GlobalViewer.scene;
     let tileset = new SSmap.Tileset(options.url);
 
     let entity = new SSmap.Entity();
     entity.addComponent(tileset);
     scene.addEntity(entity);
-
-    cache.tileset = tileset;
   },
   remove() {
     if (cache.tileset) {
       cache.tileset.delete();
       cache.tileset = null;
     }
+  },
+};
+
+export const Glbset = {
+  add(optins) {
+    let model = new SSmap.Model(optins.url);
+
+    var entity = new SSmap.Entity();
+    entity.addComponent(model);
+    let pos = SSmap.Cartographic.fromDegrees(113.930397051, 22.6339379087, 30);
+    model.transform.cartographic = pos;
+    GlobalViewer.scene.addEntity(entity);
   },
 };

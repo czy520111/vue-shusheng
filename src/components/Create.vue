@@ -377,24 +377,31 @@ const moveExtru = (e, item, index) => {
   let centerX = toRaw(item).position._rawValue.x;
   let centerY = toRaw(item).position._rawValue.y;
   let centerZ = toRaw(item).position._rawValue.z;
-  pointList.length = 0;
-  // floorGeomList.length = 0;
+  checkEdit.value = index;
   floorList.length = 0;
+  pointList.length = 0;
+  floorGeomList.length = 0;
   // let length = floorGeomList.length;
   // for (var i = length - 1; i > -1; i--) {
   //   toRaw(floorGeomList[i]).delete();
   //   floorGeomList.splice(i, 1);
   //   delete toRaw(floorGeomList[i]);
   // }
-  // pointList = toRaw(geoList[index]).pointList;
-  toRaw(geoList[index]).pointList.forEach((i) => {
-    pointList.push(toRaw(i));
-  });
-  // toRaw(geoList[index]).geo.forEach((i) => {
-  //   floorGeomList.push(toRaw(i));
-  // });
+  cloneFloorList.length = 0;
+  cloneGeoList.length = 0;
+  console.log("editCurrentGeo", item, index);
+  let pointArr = item.allPointList[index];
+  let geoList = item.geo;
   toRaw(item.edit).forEach((i) => {
     floorList.push(i);
+    cloneFloorList.push(i);
+  });
+  pointArr.forEach((i) => {
+    pointList.push(i);
+  });
+  geoList.forEach((i) => {
+    floorGeomList.push(i);
+    cloneGeoList.push(i);
   });
   // pointList.length = 0;
   // item.pointList.forEach((i) => {

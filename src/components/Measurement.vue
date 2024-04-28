@@ -103,7 +103,7 @@ const mouseClickEvent = (event) => {
   let Geoobj = {
     position: point, //坐标
     name: "zuobiao",
-    url: "src/images/circle.png", //路径
+    url: "src/images/point.png", //路径
     scale: 0.5, //比例
     altitude: 10, //海拔，非必填
 
@@ -188,7 +188,7 @@ const dblClickEvent = (event) => {
       let Geoobj = {
         position: point, //坐标
         name: "zuobiao",
-        url: "src/images/circle.png", //路径
+        url: "src/images/point.png", //路径
         scale: 0.5, //比例
         altitude: 10, //海拔，非必填
 

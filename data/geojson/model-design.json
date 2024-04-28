@@ -8,9 +8,9 @@
     "features": [
         {
             "type": "Feature",
-            "properties": { "Layer": "04_07_01", "Hight": 70 },
+            "properties": { "Layer": "04_07_01", "Hight": 70 ,"area": "7411.249999978"},
             "geometry": {
-                "type": "MultiLineString",
+                "type": "Polygon",
                 "coordinates": [
                     [
                         [113.929934754234239, 22.636202983445042],
@@ -28,9 +28,9 @@
         },
         {
             "type": "Feature",
-            "properties": { "Layer": "04_07_02", "Hight": 70 },
+            "properties": { "Layer": "04_07_02", "Hight": 70 ,"area": "2993.9744773016"},
             "geometry": {
-                "type": "MultiLineString",
+                "type": "Polygon",
                 "coordinates": [
                     [
                         [113.930107764663319, 22.63509103270215],
@@ -47,9 +47,9 @@
         },
         {
             "type": "Feature",
-            "properties": { "Layer": "04_07_03", "Hight": 70 },
+            "properties": { "Layer": "04_07_03", "Hight": 70 ,"area": "4482.25"},
             "geometry": {
-                "type": "MultiLineString",
+                "type": "Polygon",
                 "coordinates": [
                     [
                         [113.930920069170426, 22.635726471218849],
@@ -67,9 +67,9 @@
         },
         {
             "type": "Feature",
-            "properties": { "Layer": "05_02_01", "Hight": 70 },
+            "properties": { "Layer": "05_02_01", "Hight": 70,"area": "2999.9999999946" },
             "geometry": {
-                "type": "MultiLineString",
+                "type": "Polygon",
                 "coordinates": [
                     [
                         [113.931310955876484, 22.637135876756378],
@@ -85,9 +85,9 @@
         },
         {
             "type": "Feature",
-            "properties": { "Layer": "05_02_02", "Hight": 70 },
+            "properties": { "Layer": "05_02_02", "Hight": 70,"area": "3000.00000000097" },
             "geometry": {
-                "type": "MultiLineString",
+                "type": "Polygon",
                 "coordinates": [
                     [
                         [113.931827280780539, 22.63753107521913],
@@ -104,9 +104,9 @@
         },
         {
             "type": "Feature",
-            "properties": { "Layer": "05_02_03", "Hight": 70 },
+            "properties": { "Layer": "05_02_03", "Hight": 70 ,"area": "2999.47569480183"},
             "geometry": {
-                "type": "MultiLineString",
+                "type": "Polygon",
                 "coordinates": [
                     [
                         [113.932505262016946, 22.637202081459357],
@@ -122,9 +122,9 @@
         },
         {
             "type": "Feature",
-            "properties": { "Layer": "05_02_04", "Hight": 70 },
+            "properties": { "Layer": "05_02_04", "Hight": 70 ,"area": "2982.24999998674"},
             "geometry": {
-                "type": "MultiLineString",
+                "type": "Polygon",
                 "coordinates": [
                     [
                         [113.931812030773287, 22.636546789191328],
@@ -140,9 +140,9 @@
         },
         {
             "type": "Feature",
-            "properties": { "Layer": "07_01_01", "Hight": 70 },
+            "properties": { "Layer": "07_01_01", "Hight": 70 ,"area": "7411.24999994668"},
             "geometry": {
-                "type": "MultiLineString",
+                "type": "Polygon",
                 "coordinates": [
                     [
                         [113.932458341861391, 22.636071413349409],
@@ -160,9 +160,9 @@
         },
         {
             "type": "Feature",
-            "properties": { "Layer": "07_01_03", "Hight": 45 },
+            "properties": { "Layer": "07_01_03", "Hight": 45 ,"area": "7411.24999994668"},
             "geometry": {
-                "type": "MultiLineString",
+                "type": "Polygon",
                 "coordinates": [
                     [
                         [113.932823970166169, 22.635653001610727],
@@ -180,9 +180,9 @@
         },
         {
             "type": "Feature",
-            "properties": { "Layer": "07_01_04", "Hight": 70 },
+            "properties": { "Layer": "07_01_04", "Hight": 70 ,"area": "2982.25369589531"},
             "geometry": {
-                "type": "MultiLineString",
+                "type": "Polygon",
                 "coordinates": [
                     [
                         [113.932115901016431, 22.63564454389309],
@@ -199,9 +199,9 @@
         },
         {
             "type": "Feature",
-            "properties": { "Layer": "07_01_02", "Hight": 70 },
+            "properties": { "Layer": "07_01_02", "Hight": 70 ,"area": "2982.2499999525"},
             "geometry": {
-                "type": "MultiLineString",
+                "type": "Polygon",
                 "coordinates": [
                     [
                         [113.933204543709337, 22.635977662964478],

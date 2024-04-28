@@ -136,3 +136,110 @@ export function addcomputeVertices(centerX, centerY, centerZ, vertices) {
   }
   return newVertices;
 }
+//旋转多边形形
+export function rotateRectangle(center, vertices, angle) {
+  let angleInRadians = ((45 + angle) * Math.PI) / 180;
+  let arr = [];
+  vertices.map(function (point) {
+    // 将顶点坐标减去中心点坐标
+    var x = point.x - center.x;
+    var y = point.y - center.y;
+    var z = point.z - center.z;
+
+    // 应用绕 y 轴的旋转矩阵
+    var rotatedX = x * Math.cos(angleInRadians) - z * Math.sin(angleInRadians);
+    var rotatedZ = x * Math.sin(angleInRadians) + z * Math.cos(angleInRadians);
+
+    // 将旋转后的顶点坐标加上中心点坐标
+    let vec = SSmap.Vector3.create(
+      rotatedX + center.x,
+      y + center.y,
+      rotatedZ + center.z
+    );
+    arr.push(vec);
+  });
+  return arr;
+}
+
+//使用底层库画线
+export function drawLine(scene, pointList, tag, color) {
+  if (scene == undefined || pointList.length < 2) return;
+
+  var polylines = [];
+  if (polylines.length != 0) {
+    for (var k = 0; k < this.polylines.length; k++) {
+      if (polylines[k].name == tag) polylines.splice(k, 1);
+    }
+  }
+
+  var length = pointList.length;
+  var vertices = new Float32Array(length * 1);
+
+  for (var i = 0; i < length; i++) {
+    var point = pointList[i];
+    vertices[i] = point;
+  }
+
+  var vertexArray = vertices;
+  var stripSize = 3 * 4; //步长（ x,y,z  * float）
+  var vertexBuffer = SSmap.Buffer.createVertexBuffer(vertexArray, stripSize);
+  var posAttr = SSmap.GeometryAttribute.createPositionAttribute(
+    vertexBuffer,
+    0,
+    3
+  );
+
+  var geometry = new SSmap.Geometry(); //创建集合体
+  geometry.addAttribute(posAttr);
+  var material = new SSmap.Material(); //创建材质
+  material.bothSided = true; //双面材质
+  material.opacity = 1.0; //透明度
+  material.shadingModel = SSmap.ShadingModel.Unlit; //无光照
+  material.color = SSmap.Color.fromRgb(color.r, color.g, color.b, color.a); //材质颜色 RGBA
+  var renderer = new SSmap.GeometryRenderer(); //创建几何渲染器
+  renderer.castShadow = true; //投射阴影
+  renderer.type = SSmap.GeometryRendererType.Symbol; //符号类型渲染
+  renderer.primitiveType = SSmap.PrimitiveType.TriangleStrip; //openGL PrimitiveType： 线带  //TriangleStrip 面
+  renderer.geometry = geometry;
+  renderer.material = material;
+
+  //var boundingsphere = SSmap.BoundingSphere.create(pointList[0], 1000);
+  //var boundingVolume = SSmap.BoundingVolume.fromBoundingSphere(boundingsphere);
+
+  var entity = new SSmap.Entity();
+  entity.addComponent(renderer);
+  scene.addEntity(entity);
+  entity.name = tag; //添加tag, 用于删除重复物体
+
+  // polylines.push(entity);
+  return entity;
+}
+
+export function rotationEntity(mat, degX, degY, degZ, offsetHeight) {
+  let carto = mat.translation().toCartographic();
+  carto.height -= 30;
+  carto.height += offsetHeight;
+  let v3 = carto.toVector3();
+  mat.setTranslation(v3);
+  let rotX = SSmap.Quaternion.fromAxisAndAngle(
+    SSmap.Vector3.create(1.0, 0, 0),
+    degX
+  ).toRotationMatrix();
+  let rotY = SSmap.Quaternion.fromAxisAndAngle(
+    SSmap.Vector3.create(0, 1.0, 0),
+    degY
+  ).toRotationMatrix();
+  let rotZ = SSmap.Quaternion.fromAxisAndAngle(
+    SSmap.Vector3.create(0, 0, 1.0),
+    degZ + 40
+  ).toRotationMatrix();
+
+  let rotation = SSmap.Matrix3.multiply(rotX, rotY);
+  rotation = SSmap.Matrix3.multiply(rotation, rotZ);
+
+  let pos = SSmap.Vector3.create(0, 0, 0);
+  let rotationMat = SSmap.Matrix4.fromRotationTranslation(rotation, pos);
+
+  let matrix = SSmap.Matrix4.multiply(mat, rotationMat);
+  return matrix;
+}
