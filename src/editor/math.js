@@ -162,9 +162,8 @@ export function rotateRectangle(center, vertices, angle) {
 }
 
 //使用底层库画线
-export function drawLine(scene, pointList, tag, color) {
+export function drawLine(scene, pointList, tag, color, opacity) {
   if (scene == undefined || pointList.length < 2) return;
-
   var polylines = [];
   if (polylines.length != 0) {
     for (var k = 0; k < this.polylines.length; k++) {
@@ -182,7 +181,7 @@ export function drawLine(scene, pointList, tag, color) {
 
   var vertexArray = vertices;
   var stripSize = 3 * 4; //步长（ x,y,z  * float）
-  var vertexBuffer = SSmap.Buffer.createVertexBuffer(vertexArray, stripSize);
+  var vertexBuffer = SSmap.Buffer.createVertexBuffer(pointList, stripSize);
   var posAttr = SSmap.GeometryAttribute.createPositionAttribute(
     vertexBuffer,
     0,
@@ -193,13 +192,14 @@ export function drawLine(scene, pointList, tag, color) {
   geometry.addAttribute(posAttr);
   var material = new SSmap.Material(); //创建材质
   material.bothSided = true; //双面材质
-  material.opacity = 1.0; //透明度
+  material.opacity = opacity; //透明度
+  // material.roughness = 0.6; //粗糙度
   material.shadingModel = SSmap.ShadingModel.Unlit; //无光照
   material.color = SSmap.Color.fromRgb(color.r, color.g, color.b, color.a); //材质颜色 RGBA
   var renderer = new SSmap.GeometryRenderer(); //创建几何渲染器
   renderer.castShadow = true; //投射阴影
   renderer.type = SSmap.GeometryRendererType.Symbol; //符号类型渲染
-  renderer.primitiveType = SSmap.PrimitiveType.TriangleStrip; //openGL PrimitiveType： 线带  //TriangleStrip 面
+  renderer.primitiveType = SSmap.PrimitiveType.TriangleList; //openGL PrimitiveType：LineStrip 线带  //TriangleStrip 面
   renderer.geometry = geometry;
   renderer.material = material;
 
