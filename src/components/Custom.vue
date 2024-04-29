@@ -507,7 +507,7 @@ const oneBuild = (center, length, width, height) => {
     // bevelThickness: 1,
   };
   const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-  // let box1 = new THREE.BoxGeometry(20, 10, height + 4);
+  // let box1 = new THREE.BoxGeometry(20, 10, height + 1);
   const box1 = new THREE.ExtrudeGeometry(shape2, extrudeSettings2);
   const shape3 = new THREE.Shape();
 
@@ -593,11 +593,11 @@ const twoBuild = (center, length, width, height) => {
   ]);
   var polygon2 = turf.polygon([
     [
-      [-width2 + 10 - length, 0],
-      [-width2 + 10 - length, 10],
-      [-width2 + 10 - length - 20, 10],
-      [-width2 + 10 - length - 20, 0],
-      [-width2 + 10 - length, 0],
+      [-width2 + 15 - length, 0],
+      [-width2 + 15 - length, 10],
+      [-width2 + 15 - length - 20, 10],
+      [-width2 + 15 - length - 20, 0],
+      [-width2 + 15 - length, 0],
     ],
   ]);
   var polygon3 = turf.polygon([
@@ -606,20 +606,20 @@ const twoBuild = (center, length, width, height) => {
       [-5, -width - 5],
       [-length + 5, -width - 5],
       [-length + 5, 5],
-      [-length / 2, 5],
       [-5, 5],
     ],
   ]);
   var polygon4 = turf.polygon([
     [
-      [-length / 2 + 15, 0],
-      [-length / 2 + 15, 15],
-      [-length / 2 - 15, 15],
-      [-length / 2 - 15, 0],
-      [-length / 2 + 15, 0],
+      [-width2 + 20 - length, 0 + 5],
+      [-width2 + 20 - length, 10 + 5],
+      [-width2 + 10 - length - 20, 10 + 5],
+      [-width2 + 10 - length - 20, 0 + 5],
+      [-width2 + 20 - length, 0 + 5],
     ],
   ]);
   var polygon5 = turf.polygon([
+    //矩形块
     [
       [-length - width2, 0],
       [-length - width2, length],
@@ -640,24 +640,27 @@ const twoBuild = (center, length, width, height) => {
   diffArr.forEach((item, index) => {
     if (index == 0) {
       shape.moveTo(item.x, item.y);
-    }
-    // else if (index == 2 || index == 3) {
-    //   shape.lineTo(item.x, item.y + 20);
-    // }
-    else {
+    } else {
       shape.lineTo(item.x, item.y);
     }
-    // shape.holes.push(hole);
   });
-  shape2.moveTo(-width2 + 10 - length, 0);
-  shape2.lineTo(-width2 + 10 - length, 10);
-  shape2.lineTo(-width2 + 10 - length - 20, 10);
-  shape2.lineTo(-width2 + 10 - length - 20, 0);
-  shape2.lineTo(-width2 + 10 - length, 0);
+
+  let box2Arr = [];
+  polygon2.geometry.coordinates[0].forEach((item) => {
+    box2Arr.push({ x: item[0], y: item[1] });
+  });
+  box2Arr.forEach((item, index) => {
+    if (index == 0) {
+      shape2.moveTo(item.x, item.y);
+    } else {
+      shape2.lineTo(item.x, item.y);
+    }
+  });
+
   const extrudeSettings2 = {
     // bevelEnabled: true,
     // bevelThickness: 5,
-    depth: height + 4,
+    depth: height + 1,
     bevelEnabled: false,
   };
 
@@ -668,36 +671,33 @@ const twoBuild = (center, length, width, height) => {
     // bevelThickness: 1,
   };
   const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-  // let box1 = new THREE.BoxGeometry(20, 10, height + 4);
+  // let box1 = new THREE.BoxGeometry(20, 10, height + 1);
   const box1 = new THREE.ExtrudeGeometry(shape2, extrudeSettings2);
   const shape3 = new THREE.Shape();
-
   var difference2 = turf.difference(polygon3, polygon4);
   let diffArr2 = [];
   difference2.geometry.coordinates[0].forEach((item) => {
     diffArr2.push({ x: item[0], y: item[1] });
   });
 
-  // const shape2 = new THREE.Shape();
-  // var hole = new THREE.Path();
   diffArr2.forEach((item, index) => {
     if (index == 0) {
       shape3.moveTo(item.x, item.y);
     } else {
       shape3.lineTo(item.x, item.y);
     }
-    // shape.holes.push(hole);
   });
 
   const extrudeSettings3 = {
-    depth: height + 1,
+    depth: height + 0.2,
     bevelEnabled: false,
   };
   const box2 = new THREE.ExtrudeGeometry(shape3, extrudeSettings3);
 
   let shape5 = new THREE.Shape();
   let diffArr3 = [];
-  polygon5.geometry.coordinates[0].forEach((item, index) => {
+  let diff5 = turf.difference(polygon5, polygon2);
+  diff5.geometry.coordinates[0].forEach((item, index) => {
     diffArr3.push({ x: item[0], y: item[1] });
   });
   diffArr3.forEach((item, index) => {
@@ -859,7 +859,7 @@ const threeBuild = (center, length, width, height) => {
   const extrudeSettings2 = {
     // bevelEnabled: true,
     // bevelThickness: 5,
-    depth: height + 4,
+    depth: height + 1,
     bevelEnabled: false,
   };
 
@@ -870,7 +870,7 @@ const threeBuild = (center, length, width, height) => {
     // bevelThickness: 1,
   };
   const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-  // let box1 = new THREE.BoxGeometry(20, 10, height + 4);
+  // let box1 = new THREE.BoxGeometry(20, 10, height + 1);
   const box1 = new THREE.ExtrudeGeometry(shape2, extrudeSettings2);
   const shape3 = new THREE.Shape();
 
@@ -892,7 +892,7 @@ const threeBuild = (center, length, width, height) => {
   });
 
   const extrudeSettings3 = {
-    depth: height + 1,
+    depth: height + 0.2,
     bevelEnabled: false,
   };
   const box2 = new THREE.ExtrudeGeometry(shape3, extrudeSettings3);
@@ -946,7 +946,7 @@ const threeBuild = (center, length, width, height) => {
     }
   });
   const extrudeSettings7 = {
-    depth: height + 4,
+    depth: height + 1,
     bevelEnabled: false,
   };
   let box7 = new THREE.ExtrudeGeometry(shape7, extrudeSettings7);
@@ -1102,7 +1102,7 @@ const fourBuild = (center, length, width, height) => {
   const extrudeSettings2 = {
     // bevelEnabled: true,
     // bevelThickness: 5,
-    depth: height + 4,
+    depth: height + 1,
     bevelEnabled: false,
   };
 
@@ -1113,7 +1113,7 @@ const fourBuild = (center, length, width, height) => {
     // bevelThickness: 1,
   };
   const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-  // let box1 = new THREE.BoxGeometry(20, 10, height + 4);
+  // let box1 = new THREE.BoxGeometry(20, 10, height + 1);
   const box1 = new THREE.ExtrudeGeometry(shape2, extrudeSettings2);
   const shape3 = new THREE.Shape();
 
@@ -1135,7 +1135,7 @@ const fourBuild = (center, length, width, height) => {
   });
 
   const extrudeSettings3 = {
-    depth: height + 1,
+    depth: height + 0.2,
     bevelEnabled: false,
   };
   const box2 = new THREE.ExtrudeGeometry(shape3, extrudeSettings3);
