@@ -405,7 +405,7 @@ const changeBuild = () => {
   let center = toRaw(tileFeature.value).boundingVolume.center;
   let height = floorHeight.value * floorNumber.value;
   // let height = 50;
-  let length = 90;
+  let length = 100;
   let width = -oneDepth.value;
   floorArea.value = length * oneDepth.value * height;
   let length1 = floorGeomList.length;
@@ -1112,7 +1112,7 @@ const threeBuild = (center, length, width, height) => {
     r: 142,
     g: 147,
     b: 227,
-    a: 255,
+    a: 1,
   };
   let boxColor3 = {
     r: 0,
@@ -1188,6 +1188,7 @@ const fourBuild = (center, length, width, height) => {
     ],
   ]);
   var polygon4 = turf.polygon([
+    //绿色被减面
     [
       [-length / 2 + 15, 0],
       [-length / 2 + 15, 15],
@@ -1196,6 +1197,7 @@ const fourBuild = (center, length, width, height) => {
       [-length / 2 + 15, 0],
     ],
   ]);
+  //下面是其他蓝色面矩形
   var polygon5 = turf.polygon([
     [
       [-length - width2, 0],
@@ -1205,6 +1207,37 @@ const fourBuild = (center, length, width, height) => {
       [-length - width2, 0],
     ],
   ]);
+  var polygon8 = turf.polygon([
+    //绿色
+    [
+      [-length - width2 - 5, 5],
+      [-length - width2 - 5, length - 5],
+      [-length + 5, length - 5],
+      [-length + 5, 5],
+      [-length - width2 - 5, 5],
+    ],
+  ]);
+  var polygon9 = turf.polygon([
+    //红色
+    [
+      [-length + 10, length / 2 - 10],
+      [-length + 10, length / 2 + 10],
+      [-length, length / 2 + 10],
+      [-length, length / 2 - 10],
+      [-length + 10, length / 2 - 10],
+    ],
+  ]);
+  var polygon10 = turf.polygon([
+    //绿色被减面
+    [
+      [-length + 15, length / 2 - 15],
+      [-length + 15, length / 2 + 15],
+      [-length, length / 2 + 15],
+      [-length, length / 2 - 15],
+      [-length + 15, length / 2 - 15],
+    ],
+  ]);
+  //另一个方向
   var polygon6 = turf.polygon([
     [
       [0, 0],
@@ -1214,6 +1247,37 @@ const fourBuild = (center, length, width, height) => {
       [0, 0],
     ],
   ]);
+  var polygon11 = turf.polygon([
+    //绿色
+    [
+      [-5, 5],
+      [-5, length - 5],
+      [width3 + 5, length - 5],
+      [width3 + 5, 5],
+      [-5, 5],
+    ],
+  ]);
+  var polygon12 = turf.polygon([
+    //红色
+    [
+      [0, length / 2 - 10],
+      [0, length / 2 + 10],
+      [-10, length / 2 + 10],
+      [-10, length / 2 - 10],
+      [0, length / 2 - 10],
+    ],
+  ]);
+  var polygon13 = turf.polygon([
+    //绿色被减面
+    [
+      [-5, length / 2 - 15],
+      [-5, length / 2 + 15],
+      [-15, length / 2 + 15],
+      [-15, length / 2 - 15],
+      [-5, length / 2 - 15],
+    ],
+  ]);
+  //另一个方向
   var polygon7 = turf.polygon([
     [
       [0, length + width4],
@@ -1221,6 +1285,36 @@ const fourBuild = (center, length, width, height) => {
       [-length, length],
       [-length, length + width4],
       [0, length + width4],
+    ],
+  ]);
+  var polygon14 = turf.polygon([
+    //红色
+    [
+      [-length / 2 + 10, length - 10],
+      [-length / 2 + 10, length],
+      [-length / 2 - 10, length],
+      [-length / 2 - 10, length - 10],
+      [-length / 2 + 10, length - 10],
+    ],
+  ]);
+  var polygon15 = turf.polygon([
+    //绿色
+    [
+      [-5, length - 5],
+      [-5, length + width4 + 5],
+      [-length + 5, length + width4 + 5],
+      [-length + 5, length - 5],
+      [-5, length - 5],
+    ],
+  ]);
+  var polygon16 = turf.polygon([
+    //绿色被减面
+    [
+      [-length / 2 + 15, length - 15],
+      [-length / 2 + 15, length],
+      [-length / 2 - 15, length],
+      [-length / 2 - 15, length - 15],
+      [-length / 2 + 15, length - 15],
     ],
   ]);
 
@@ -1291,8 +1385,9 @@ const fourBuild = (center, length, width, height) => {
   const box2 = new THREE.ExtrudeGeometry(shape3, extrudeSettings3);
 
   let shape5 = new THREE.Shape();
+  let diff22 = turf.difference(polygon5, polygon9);
   let diffArr3 = [];
-  polygon5.geometry.coordinates[0].forEach((item, index) => {
+  diff22.geometry.coordinates[0].forEach((item, index) => {
     diffArr3.push({ x: item[0], y: item[1] });
   });
   diffArr3.forEach((item, index) => {
@@ -1308,9 +1403,49 @@ const fourBuild = (center, length, width, height) => {
   };
   let box3 = new THREE.ExtrudeGeometry(shape5, extrudeSettings5);
 
+  let shape8 = new THREE.Shape();
+  let diff2 = turf.difference(polygon8, polygon10);
+  let diffArr4 = [];
+  diff2.geometry.coordinates[0].forEach((item, index) => {
+    diffArr4.push({ x: item[0], y: item[1] });
+  });
+  diffArr4.forEach((item, index) => {
+    if (index == 0) {
+      shape8.moveTo(item.x, item.y);
+    } else {
+      shape8.lineTo(item.x, item.y);
+    }
+  });
+  const extrudeSettings8 = {
+    depth: height + 0.2,
+    bevelEnabled: false,
+  };
+  let box8 = new THREE.ExtrudeGeometry(shape8, extrudeSettings8);
+
+  let shape9 = new THREE.Shape();
+  let diffArr5 = [];
+  polygon9.geometry.coordinates[0].forEach((item, index) => {
+    diffArr5.push({ x: item[0], y: item[1] });
+  });
+  diffArr5.forEach((item, index) => {
+    if (index == 0) {
+      shape9.moveTo(item.x, item.y);
+    } else {
+      shape9.lineTo(item.x, item.y);
+    }
+  });
+  const extrudeSettings9 = {
+    depth: height + 1,
+    bevelEnabled: false,
+  };
+  let box9 = new THREE.ExtrudeGeometry(shape9, extrudeSettings9);
+
+  //另一个矩形块
+
   let shape6 = new THREE.Shape();
   let diffArr6 = [];
-  polygon6.geometry.coordinates[0].forEach((item, index) => {
+  let diff333 = turf.difference(polygon6, polygon12);
+  diff333.geometry.coordinates[0].forEach((item, index) => {
     diffArr6.push({ x: item[0], y: item[1] });
   });
   diffArr6.forEach((item, index) => {
@@ -1326,9 +1461,49 @@ const fourBuild = (center, length, width, height) => {
   };
   let box6 = new THREE.ExtrudeGeometry(shape6, extrudeSettings6);
 
+  let shape11 = new THREE.Shape();
+  let diffArr11 = [];
+  let diff3 = turf.difference(polygon11, polygon13);
+  diff3.geometry.coordinates[0].forEach((item, index) => {
+    diffArr11.push({ x: item[0], y: item[1] });
+  });
+  diffArr11.forEach((item, index) => {
+    if (index == 0) {
+      shape11.moveTo(item.x, item.y);
+    } else {
+      shape11.lineTo(item.x, item.y);
+    }
+  });
+  const extrudeSettings11 = {
+    depth: height + 0.2,
+    bevelEnabled: false,
+  };
+  let box11 = new THREE.ExtrudeGeometry(shape11, extrudeSettings11);
+
+  let shape12 = new THREE.Shape();
+  let diffArr12 = [];
+  polygon12.geometry.coordinates[0].forEach((item, index) => {
+    diffArr12.push({ x: item[0], y: item[1] });
+  });
+  diffArr12.forEach((item, index) => {
+    if (index == 0) {
+      shape12.moveTo(item.x, item.y);
+    } else {
+      shape12.lineTo(item.x, item.y);
+    }
+  });
+  const extrudeSettings12 = {
+    depth: height + 1,
+    bevelEnabled: false,
+  };
+  let box12 = new THREE.ExtrudeGeometry(shape12, extrudeSettings12);
+
+  //另一个矩形块
+
   let shape7 = new THREE.Shape();
+  let diff4 = turf.difference(polygon7, polygon14);
   let diffArr7 = [];
-  polygon7.geometry.coordinates[0].forEach((item, index) => {
+  diff4.geometry.coordinates[0].forEach((item, index) => {
     diffArr7.push({ x: item[0], y: item[1] });
   });
   diffArr7.forEach((item, index) => {
@@ -1344,6 +1519,43 @@ const fourBuild = (center, length, width, height) => {
   };
   let box7 = new THREE.ExtrudeGeometry(shape7, extrudeSettings7);
 
+  let shape14 = new THREE.Shape();
+  let diffArr14 = [];
+  polygon14.geometry.coordinates[0].forEach((item, index) => {
+    diffArr14.push({ x: item[0], y: item[1] });
+  });
+  diffArr14.forEach((item, index) => {
+    if (index == 0) {
+      shape14.moveTo(item.x, item.y);
+    } else {
+      shape14.lineTo(item.x, item.y);
+    }
+  });
+  const extrudeSettings14 = {
+    depth: height + 1,
+    bevelEnabled: false,
+  };
+  let box14 = new THREE.ExtrudeGeometry(shape14, extrudeSettings14);
+
+  let shape15 = new THREE.Shape();
+  let diff44 = turf.difference(polygon15, polygon16);
+  let diffArr15 = [];
+  diff44.geometry.coordinates[0].forEach((item, index) => {
+    diffArr15.push({ x: item[0], y: item[1] });
+  });
+  diffArr15.forEach((item, index) => {
+    if (index == 0) {
+      shape15.moveTo(item.x, item.y);
+    } else {
+      shape15.lineTo(item.x, item.y);
+    }
+  });
+  const extrudeSettings15 = {
+    depth: height + 0.2,
+    bevelEnabled: false,
+  };
+  let box15 = new THREE.ExtrudeGeometry(shape15, extrudeSettings15);
+
   var selfPosition = GlobalViewer.scene.globe.ellipsoid.eastNorthUpToFixedFrame(
     center.toCartesian3()
   );
@@ -1353,6 +1565,12 @@ const fourBuild = (center, length, width, height) => {
   let att4 = box3.attributes;
   let att6 = box6.attributes;
   let att7 = box7.attributes;
+  let att8 = box8.attributes;
+  let att9 = box9.attributes;
+  let att11 = box11.attributes;
+  let att12 = box12.attributes;
+  let att14 = box14.attributes;
+  let att15 = box15.attributes;
   let boxColor2 = {
     r: 255,
     g: 0,
@@ -1383,10 +1601,40 @@ const fourBuild = (center, length, width, height) => {
   let e4 = drawLine(GlobalViewer.scene, att4.position.array, "1", boxColor, 1);
   let e6 = drawLine(GlobalViewer.scene, att6.position.array, "1", boxColor, 1);
   let e7 = drawLine(GlobalViewer.scene, att7.position.array, "1", boxColor, 1);
+  let e8 = drawLine(GlobalViewer.scene, att8.position.array, "1", boxColor3, 1);
+  let e9 = drawLine(GlobalViewer.scene, att9.position.array, "1", boxColor2, 1);
+  let e11 = drawLine(
+    GlobalViewer.scene,
+    att11.position.array,
+    "1",
+    boxColor3,
+    1
+  );
+  let e12 = drawLine(
+    GlobalViewer.scene,
+    att12.position.array,
+    "1",
+    boxColor2,
+    1
+  );
+  let e14 = drawLine(
+    GlobalViewer.scene,
+    att14.position.array,
+    "1",
+    boxColor2,
+    1
+  );
+  let e15 = drawLine(
+    GlobalViewer.scene,
+    att15.position.array,
+    "1",
+    boxColor3,
+    1
+  );
   let arr = [];
-  arr.push(e1, e2, e3, e4, e6, e7);
+  arr.push(e1, e2, e3, e4, e6, e7, e8, e9, e11, e12, e14, e15);
   // arr.push(e2);
-  floorGeomList.push(e1, e2, e3, e4, e6, e7);
+  floorGeomList.push(e1, e2, e3, e4, e6, e7, e8, e9, e11, e12, e14, e15);
   const mat = rotationEntity(selfPosition, 0, 0, floorRotate.value, 0);
   const transtion = SSmap.Matrix4.fromTranslation(
     SSmap.Vector3.create(40, -50, -34)
