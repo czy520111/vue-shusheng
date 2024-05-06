@@ -149,6 +149,7 @@ const mousemoveEvent = (event) => {
   let movePoly = drawPolyline(obj);
   moveList.push(movePoly);
   if (pointList.length > 1) {
+    debugger;
     let altitude = SSmap.AltitudeMethod.OnTerrain;
     let polygongeometryObj = {
       fillAlpha: 0.5,
@@ -241,15 +242,4 @@ onUnmounted(() => {
 });
 </script>
 
-<style lang="scss" scoped>
-.area {
-  position: absolute;
-  top: 62px;
-  left: 360px;
-  width: 50px;
-  height: 20px;
-  p {
-    color: white;
-  }
-}
-</style>
+<style lang="scss" scoped></style>

@@ -192,10 +192,10 @@ export function drawLine(scene, pointList, tag, color, opacity) {
   geometry.addAttribute(posAttr);
   var material = new SSmap.Material(); //创建材质
   material.bothSided = true; //双面材质
-  material.opacity = opacity; //透明度
+  material.opacity = color.a; //透明度
   // material.roughness = 0.6; //粗糙度
   material.shadingModel = SSmap.ShadingModel.Unlit; //无光照
-  material.color = SSmap.Color.fromRgb(color.r, color.g, color.b, color.a); //材质颜色 RGBA
+  material.color = SSmap.Color.fromRgb(color.r, color.g, color.b, 1); //材质颜色 RGBA
   var renderer = new SSmap.GeometryRenderer(); //创建几何渲染器
   renderer.castShadow = true; //投射阴影
   renderer.type = SSmap.GeometryRendererType.Symbol; //符号类型渲染
@@ -242,4 +242,116 @@ export function rotationEntity(mat, degX, degY, degZ, offsetHeight) {
 
   let matrix = SSmap.Matrix4.multiply(mat, rotationMat);
   return matrix;
+}
+
+//已知中心点和长，计算四个顶点
+export function calculateSquareVertices(centerX, centerY, sideLength) {
+  var halfLength = sideLength / 2;
+
+  // 顺时针旋转45度
+  var rotateAngle = (45 * Math.PI) / 180;
+
+  // 顶点相对中心点的位置
+  var topLeft = { x: -halfLength, y: -halfLength };
+  var topRight = { x: halfLength, y: -halfLength };
+  var bottomRight = { x: halfLength, y: halfLength };
+  var bottomLeft = { x: -halfLength, y: halfLength };
+
+  // 顶点相对中心点的旋转后位置
+  var rotatedTopLeft = {
+    x: topLeft.x * Math.cos(rotateAngle) - topLeft.y * Math.sin(rotateAngle),
+    y: topLeft.x * Math.sin(rotateAngle) + topLeft.y * Math.cos(rotateAngle),
+  };
+
+  var rotatedTopRight = {
+    x: topRight.x * Math.cos(rotateAngle) - topRight.y * Math.sin(rotateAngle),
+    y: topRight.x * Math.sin(rotateAngle) + topRight.y * Math.cos(rotateAngle),
+  };
+
+  var rotatedBottomRight = {
+    x:
+      bottomRight.x * Math.cos(rotateAngle) -
+      bottomRight.y * Math.sin(rotateAngle),
+    y:
+      bottomRight.x * Math.sin(rotateAngle) +
+      bottomRight.y * Math.cos(rotateAngle),
+  };
+
+  var rotatedBottomLeft = {
+    x:
+      bottomLeft.x * Math.cos(rotateAngle) -
+      bottomLeft.y * Math.sin(rotateAngle),
+    y:
+      bottomLeft.x * Math.sin(rotateAngle) +
+      bottomLeft.y * Math.cos(rotateAngle),
+  };
+
+  // 平移旋转后的顶点到原中心点位置
+  var rotatedVertices = [
+    { x: centerX + rotatedTopLeft.x, y: centerY + rotatedTopLeft.y, z: 10 },
+    { x: centerX + rotatedTopRight.x, y: centerY + rotatedTopRight.y, z: 10 },
+    {
+      x: centerX + rotatedBottomRight.x,
+      y: centerY + rotatedBottomRight.y,
+      z: 10,
+    },
+    {
+      x: centerX + rotatedBottomLeft.x,
+      y: centerY + rotatedBottomLeft.y,
+      z: 10,
+    },
+  ];
+
+  var vertices = [];
+  rotatedVertices.forEach((vertex) => {
+    vertices.push(SSmap.Vector3.create(vertex.x, vertex.y, vertex.z));
+  });
+
+  return vertices;
+}
+
+// 计算两点之间的距离
+function distance(point1, point2) {
+  return Math.sqrt(
+    Math.pow(point1.x - point2.x, 2) + Math.pow(point1.y - point2.y, 2)
+  );
+}
+
+// 计算中心点
+function calculateCenter(vertices) {
+  let sumX = 0,
+    sumY = 0;
+  for (let vertex of vertices) {
+    sumX += vertex.x;
+    sumY += vertex.y;
+  }
+  return { x: sumX / vertices.length, y: sumY / vertices.length };
+}
+
+// 旋转点
+function rotatePoint(point, angle, center) {
+  const radians = (angle * Math.PI) / 180;
+  const cosAngle = Math.cos(radians);
+  const sinAngle = Math.sin(radians);
+  const translatedX = point.x - center.x;
+  const translatedY = point.y - center.y;
+  const x = translatedX * cosAngle - translatedY * sinAngle;
+  const y = translatedX * sinAngle + translatedY * cosAngle;
+  return { x: x + center.x, y: y + center.y };
+}
+
+// 计算旋转后的顶点
+export function rotateRectangleVertices(vertices, angle) {
+  const center = calculateCenter(vertices);
+  const rotatedVertices = [];
+  for (let vertex of vertices) {
+    const rotatedPoint = rotatePoint(vertex, angle, center);
+    rotatedVertices.push({ x: rotatedPoint.x, y: rotatedPoint.y, z: vertex.z });
+  }
+  let arr = [];
+  rotatedVertices.map(function (point) {
+    let vec = SSmap.Vector3.create(point.x, point.y, point.z);
+    arr.push(vec);
+  });
+  return arr;
 }

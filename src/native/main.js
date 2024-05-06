@@ -94,6 +94,38 @@ export const Tileset = {
     let entity = new SSmap.Entity();
     entity.addComponent(tileset);
     scene.addEntity(entity);
+    let bbb = tileset.contentLoaded(function (entity) {
+      // console.log("contentLoaded", entity);
+      entity.travalRenderers(function (renderer) {
+        let material = renderer.material;
+        let roug = renderer.material.roughness;
+        let opacity = renderer.material.opacity;
+        let color = {
+          r: material.color.red,
+          g: material.color.green,
+          b: material.color.blue,
+        };
+        let text = material.texture;
+        console.log("renderer", renderer.material, roug, opacity, color, text);
+      });
+    });
+    window.boxColor1 = { r: 227, g: 225, b: 219, a: 1 };
+    window.boxColor2 = { r: 255, g: 255, b: 255 };
+    window.boxColor3 = {
+      //花园色
+      r: 199,
+      g: 225,
+      b: 171,
+      a: 1,
+    };
+    window.boxColor4 = {
+      //停车色
+      r: 245,
+      g: 195,
+      b: 151,
+      a: 1,
+    };
+    // console.log(bbb, "889988");
   },
   remove() {
     if (cache.tileset) {

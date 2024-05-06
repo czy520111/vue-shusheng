@@ -1,6 +1,6 @@
 <template>
   <div class="test">
-    <p>测量</p>
+    <!-- <p>测量</p> -->
     <div class="mb-4">
       <el-button @click="setLine()" type="primary">线长</el-button>
       <!-- <el-button type="danger">Danger</el-button> -->
@@ -486,15 +486,4 @@ onUnmounted(() => {
 });
 </script>
 
-<style lang="scss" scoped>
-.test {
-  position: absolute;
-  top: 10px;
-  left: 200px;
-  width: 50px;
-  height: 20px;
-  p {
-    color: white;
-  }
-}
-</style>
+<style lang="scss" scoped></style>

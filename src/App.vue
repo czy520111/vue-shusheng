@@ -43,11 +43,28 @@
       <!-- <div>
         <button @click="toggleComponent">Toggle Component</button>
       </div> -->
-      <Measurement @clearMeasure="clearMeasure" />
-      <Coordinate />
-      <Area />
-      <Volume />
-      <Create />
+      <div class="tool-box">
+        <p>测量</p>
+        <div>
+          <Measurement v-if="meausreVal" />
+          <el-button
+            v-else
+            type="primary"
+            @click="changeComponent('meausreVal')"
+            >线长</el-button
+          >
+        </div>
+        <div>
+          <Coordinate v-if="coorVal" />
+          <el-button v-else type="primary" @click="changeComponent('coorVal')"
+            >坐标</el-button
+          >
+        </div>
+
+        <Area />
+        <Volume />
+        <Create />
+      </div>
 
       <!-- <Point></Point> -->
     </div>
@@ -67,12 +84,25 @@ import { ElRadioGroup, ElRadio, ElRadioButton } from "element-plus";
 import * as Native from "./native/main.js";
 import qtLoader from "../assets/loader.js";
 
+const meausreVal = ref(false);
+const coorVal = ref(false);
 // export default {
 //   name: "app",
 //   setup() {
 const container = ref(null);
 const selectedComponent = ref("");
 const componentKey = ref(0);
+
+const changeComponent = (val) => {
+  console.log("changeComponent", val);
+  meausreVal.value = false;
+  coorVal.value = false;
+  if (val === "meausreVal") {
+    meausreVal.value = true;
+  } else if (val === "coorVal") {
+    coorVal.value = true;
+  }
+};
 
 const toggleComponent = () => {
   componentKey.value++; // 改变 key 值，触发组件重新渲染
@@ -169,5 +199,12 @@ canvas {
 }
 .meausre {
   color: white;
+}
+.tool-box {
+  position: absolute;
+  left: 200px;
+  top: 10px;
+  padding: 5px;
+  background-color: rgba(0, 0, 0, 0.7);
 }
 </style>

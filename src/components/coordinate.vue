@@ -159,14 +159,4 @@ onUnmounted(() => {
 </script>
 
 <style lang="scss" scoped>
-.coordinate {
-  position: absolute;
-  top: 62px;
-  left: 280px;
-  width: 50px;
-  height: 20px;
-  p {
-    color: white;
-  }
-}
 </style>

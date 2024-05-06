@@ -197,11 +197,22 @@
             ></el-button>
           </p>
         </div>
+        <div class="bottom-build">
+          <el-button type="primary">完成建筑生成</el-button>
+        </div>
       </div>
     </div>
     <div class="next-button" v-show="showSureButton">
-      <el-button type="primary" :icon="ArrowLeft">上一步</el-button>
-      <el-button type="primary" :icon="ArrowRight">下一步</el-button>
+      <el-button type="primary" @click="lastStep" :icon="ArrowLeft"
+        >上一步</el-button
+      >
+      <el-button
+        type="primary"
+        :disabled="showNext"
+        @click="nextStep"
+        :icon="ArrowRight"
+        >下一步</el-button
+      >
     </div>
     <div class="checktBox">
       <div class="checkBox-content">
@@ -237,8 +248,14 @@ import ThreeBSP from "../editor/threebsp.js";
 // import ThreeBSP from "../editor/threebsp.js";
 // import ThreeBSP from "threebsp.js";
 // import { ThreeBSP } from "../editor/threebsp.js";
-import { drawPolygonGeometry } from "../editor/draw.js";
-import { rotateRectangle, drawLine, rotationEntity } from "../editor/math.js";
+import { drawPolygonGeometry, drawPolygon3D } from "../editor/draw.js";
+import {
+  rotateRectangle,
+  drawLine,
+  rotationEntity,
+  calculateSquareVertices,
+  rotateRectangleVertices,
+} from "../editor/math.js";
 import { ElMessage } from "element-plus";
 // const ThreeBSP = require("jthreebsp")(THREE);
 // const ThreeBSP = _ThreeBSP(THREE);
@@ -263,6 +280,8 @@ const showEditFloor = ref(false);
 const showSureButton = ref(false);
 const tileFeature = ref(null); //点击时的tiles
 const checkType = ref(0); //点击类型
+const showNext = ref(true);
+const directionVal = reactive([]);
 
 //模型的数组
 const floorGeomList = reactive([]);
@@ -347,7 +366,8 @@ const mouseClickEvent = (e) => {
 
   let feature5 = window.GlobalViewer.scene.getFeatureByMouse();
   tileFeature.value = feature5;
-  console.log(feature, "789789", projectLayer, feature5);
+  console.log(feature, projectLayer, "789789", projectLayer, feature5);
+  // let ce = direction.center().toVector3();
   if (nowNode.value && feature) {
     toRaw(nowNode.value).setColor(SSmap.Color.fromRgb(0, 0, 255, 150));
     toRaw(nowNode.value).setSelectedColor(SSmap.Color.fromRgb(0, 0, 255, 128));
@@ -355,6 +375,12 @@ const mouseClickEvent = (e) => {
     toRaw(nowNode.value).setStrokeColor(SSmap.Color.fromRgb(0, 0, 255, 150));
   }
   if (feature) {
+    let dire = feature5.tileset.rectangle;
+    let southwest = dire.southwest().toVector3();
+    let southeast = dire.southeast().toVector3();
+    let northeast = dire.northeast().toVector3();
+    let northwest = dire.northwest().toVector3();
+    directionVal.push(southwest, southeast, northeast, northwest);
     let Layer = feature.getProperty("Layer");
     let Area = feature.getProperty("area");
     let modified = Layer.substring(0, Layer.lastIndexOf("_"));
@@ -398,7 +424,36 @@ const showDeitHandle = (value) => {
     .removeEventListener("click", mouseClickEvent);
   // drawExtru(arr);
   console.log(nowNode.value, "789789", tileFeature.value);
+
   changeBuild();
+};
+const lastStep = () => {
+  showEditFloor.value = false;
+  showSureButton.value = false;
+  showContent.value = false;
+  showNumber.value = false;
+  directionVal.length = 0;
+  let feature = toRaw(nowNode.value).feature();
+  feature.enabled = true;
+  feature.parent.enabled = true;
+  feature.parent.parent.enabled = true;
+  toRaw(nowNode.value).enabled = true;
+  toRaw(tileFeature.value).tileset.enabled = true; //设置tiles隐藏
+  let length1 = floorGeomList.length;
+  for (var i = length1 - 1; i > -1; i--) {
+    toRaw(floorGeomList[i]).delete();
+    floorGeomList.splice(i, 1);
+    delete toRaw(floorGeomList[i]);
+  }
+  toRaw(nowNode.value).setColor(SSmap.Color.fromRgb(0, 0, 255, 150));
+  toRaw(nowNode.value).setSelectedColor(SSmap.Color.fromRgb(0, 0, 255, 128));
+  // toRaw(nowNode.value).setStrokeWidth(3);
+  toRaw(nowNode.value).setStrokeColor(SSmap.Color.fromRgb(0, 0, 255, 150));
+  createEvent();
+};
+
+const nextStep = () => {
+  showNext.value = false;
 };
 
 const changeBuild = () => {
@@ -414,26 +469,110 @@ const changeBuild = () => {
     floorGeomList.splice(i, 1);
     delete toRaw(floorGeomList[i]);
   }
+  let boxColor = {
+    r: 161,
+    g: 161,
+    b: 227,
+    a: 1,
+  };
+  let boxColor2;
+  let boxColor3;
+  if (facadeStyle.value == "石材") {
+    boxColor2 = {
+      r: 118,
+      g: 141,
+      b: 227,
+      a: 1,
+    };
+  } else {
+    boxColor2 = {
+      r: 0,
+      g: 0,
+      b: 255,
+      a: 0.5,
+    };
+  }
+  if (roomTop.value == "楼顶停车") {
+    boxColor3 = {
+      r: 167,
+      g: 81,
+      b: 223,
+      a: 1,
+    };
+  } else {
+    boxColor3 = {
+      r: 144,
+      g: 198,
+      b: 65,
+      a: 1,
+    };
+  }
 
   switch (checkType.value) {
     case 1:
-      oneBuild(center, length, width, height);
+      oneBuild(center, length, width, height, boxColor, boxColor2, boxColor3);
       break;
     case 2:
-      twoBuild(center, length, width, height);
+      twoBuild(center, length, width, height, boxColor, boxColor2, boxColor3);
       break;
     case 3:
-      threeBuild(center, length, width, height);
+      threeBuild(center, length, width, height, boxColor, boxColor2, boxColor3);
       break;
     case 4:
-      fourBuild(center, length, width, height);
+      fourBuild(center, length, width, height, boxColor, boxColor2, boxColor3);
       break;
     default:
       break;
   }
+  const worldPosition =
+    GlobalViewer.scene.globe.ellipsoid.eastNorthUpToFixedFrame(
+      center.toCartesian3()
+    );
+  let worldToLocal = worldPosition.inverted();
+  let pointArr = [];
+  directionVal.forEach((item) => {
+    let point;
+    point = SSmap.Matrix4.multiplyByVector3(worldToLocal, toRaw(item));
+    let rotation = SSmap.Quaternion.fromEulerAngles(
+      0,
+      0,
+      40
+    ).toRotationMatrix();
+    let modelMatrix = SSmap.Matrix4.fromRotationTranslation(
+      rotation,
+      SSmap.Vector3.create(0, 0, 0)
+    );
+    let scaleMatrix = SSmap.Matrix4.fromScale(
+      SSmap.Vector3.create(0.8, 0.8, 0.8)
+    );
+    let matrix = SSmap.Matrix4.multiply(worldPosition, modelMatrix);
+    matrix = SSmap.Matrix4.multiply(matrix, scaleMatrix);
+    point = SSmap.Matrix4.multiplyByVector3(matrix, toRaw(point));
+    pointArr.push(toRaw(point));
+  });
+  var altitude = SSmap.AltitudeMethod.OnTerrain;
+  var obj1 = {
+    alpha: 100, //边界透明度
+    pointArr: pointArr, //点坐标
+    color: SSmap.Color.fromRgb(0, 102, 255, 200), //填充颜色
+    borColor: SSmap.Color.fromRgb(83, 255, 26, 255), //边界颜色
+    altitude: altitude, //海拔高度模式
+    name: "mianhuancong", //名称
+    width: 1, //边界宽度
+  };
+  var Aentity = drawPolygon3D(obj1);
+  floorGeomList.push(Aentity);
 };
 
-const oneBuild = (center, length, width, height) => {
+const oneBuild = (
+  center,
+  length,
+  width,
+  height,
+  boxColor,
+  boxColor2,
+  boxColor3
+) => {
   const shape = new THREE.Shape();
   var polygon1 = turf.polygon([
     [
@@ -539,24 +678,7 @@ const oneBuild = (center, length, width, height) => {
   let attributr = geometry.attributes;
   let att2 = box1.attributes;
   let att3 = box2.attributes;
-  let boxColor2 = {
-    r: 255,
-    g: 0,
-    b: 0,
-    a: 255,
-  };
-  let boxColor = {
-    r: 140,
-    g: 145,
-    b: 227,
-    a: 220,
-  };
-  let boxColor3 = {
-    r: 0,
-    g: 255,
-    b: 0,
-    a: 255,
-  };
+
   let e1 = drawLine(
     GlobalViewer.scene,
     attributr.position.array,
@@ -579,7 +701,15 @@ const oneBuild = (center, length, width, height) => {
     i.transform.matrix = matrix4;
   });
 };
-const twoBuild = (center, length, width, height) => {
+const twoBuild = (
+  center,
+  length,
+  width,
+  height,
+  boxColor,
+  boxColor2,
+  boxColor3
+) => {
   let width2 = -twoDepth.value;
   const shape = new THREE.Shape();
   var polygon1 = turf.polygon([
@@ -751,24 +881,6 @@ const twoBuild = (center, length, width, height) => {
   let att3 = box2.attributes;
   let att4 = box3.attributes;
   let att5 = box4.attributes;
-  let boxColor2 = {
-    r: 255,
-    g: 0,
-    b: 0,
-    a: 255,
-  };
-  let boxColor = {
-    r: 142,
-    g: 147,
-    b: 227,
-    a: 255,
-  };
-  let boxColor3 = {
-    r: 0,
-    g: 255,
-    b: 0,
-    a: 255,
-  };
   let e1 = drawLine(
     GlobalViewer.scene,
     attributr.position.array,
@@ -793,7 +905,15 @@ const twoBuild = (center, length, width, height) => {
     i.transform.matrix = matrix4;
   });
 };
-const threeBuild = (center, length, width, height) => {
+const threeBuild = (
+  center,
+  length,
+  width,
+  height,
+  boxColor,
+  boxColor2,
+  boxColor3
+) => {
   let width2 = -twoDepth.value;
   let width3 = -threeDepth.value;
   const shape = new THREE.Shape();
@@ -1102,24 +1222,6 @@ const threeBuild = (center, length, width, height) => {
   let att8 = box8.attributes;
   let att9 = box9.attributes;
   let att10 = box10.attributes;
-  let boxColor2 = {
-    r: 255,
-    g: 0,
-    b: 0,
-    a: 255,
-  };
-  let boxColor = {
-    r: 142,
-    g: 147,
-    b: 227,
-    a: 1,
-  };
-  let boxColor3 = {
-    r: 0,
-    g: 255,
-    b: 0,
-    a: 255,
-  };
   let e1 = drawLine(
     GlobalViewer.scene,
     attributr.position.array,
@@ -1154,7 +1256,15 @@ const threeBuild = (center, length, width, height) => {
     i.transform.matrix = matrix4;
   });
 };
-const fourBuild = (center, length, width, height) => {
+const fourBuild = (
+  center,
+  length,
+  width,
+  height,
+  boxColor,
+  boxColor2,
+  boxColor3
+) => {
   let width2 = -twoDepth.value;
   let width3 = -threeDepth.value;
   let width4 = -fourDepth.value;
@@ -1571,24 +1681,6 @@ const fourBuild = (center, length, width, height) => {
   let att12 = box12.attributes;
   let att14 = box14.attributes;
   let att15 = box15.attributes;
-  let boxColor2 = {
-    r: 255,
-    g: 0,
-    b: 0,
-    a: 255,
-  };
-  let boxColor = {
-    r: 142,
-    g: 147,
-    b: 227,
-    a: 255,
-  };
-  let boxColor3 = {
-    r: 0,
-    g: 255,
-    b: 0,
-    a: 255,
-  };
   let e1 = drawLine(
     GlobalViewer.scene,
     attributr.position.array,
@@ -1758,6 +1850,7 @@ const deRoomTop = () => {
   } else {
     roomTop.value = "屋顶花园";
   }
+  changeBuild();
 };
 const addRoomTop = () => {
   if (roomTop.value == "屋顶花园") {
@@ -1765,6 +1858,7 @@ const addRoomTop = () => {
   } else {
     roomTop.value = "屋顶花园";
   }
+  changeBuild();
 };
 //立面样式
 const deFacedeStyle = () => {
@@ -1773,6 +1867,7 @@ const deFacedeStyle = () => {
   } else {
     facadeStyle.value = "石材";
   }
+  changeBuild();
 };
 const addFacedestyle = () => {
   if (facadeStyle.value == "石材") {
@@ -1780,6 +1875,7 @@ const addFacedestyle = () => {
   } else {
     facadeStyle.value = "石材";
   }
+  changeBuild();
 };
 
 onMounted(() => {
@@ -1857,6 +1953,7 @@ onMounted(() => {
     box-shadow: 0 0.625rem 1.5625rem #9c9db29c;
     background-color: #ffffff80;
     border-radius: 0.26042rem;
+    // min-height: 500px;
     display: flex;
 
     .edit-left {
@@ -1941,6 +2038,11 @@ onMounted(() => {
         font-weight: 900;
       }
     }
+  }
+  .bottom-build {
+    // position: absolute;
+    // bottom: 10px;
+    margin-left: -80px;
   }
 }
 </style>

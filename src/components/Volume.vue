@@ -326,14 +326,5 @@ onUnmounted(() => {
 </script>
 
 <style lang="scss" scoped>
-.area {
-  position: absolute;
-  top: 62px;
-  left: 440px;
-  width: 50px;
-  height: 20px;
-  p {
-    color: white;
-  }
-}
+
 </style>
