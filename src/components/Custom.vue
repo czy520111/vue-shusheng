@@ -656,6 +656,7 @@ const changeBuild = () => {
       color: SSmap.Color.fromRgb(0, 0, 255, 200),
       altitude: SSmap.AltitudeMethod.Absolute,
       dash: true,
+      height: 30,
       depthTest: false,
       name: "move",
     };

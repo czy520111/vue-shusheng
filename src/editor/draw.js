@@ -42,7 +42,8 @@ export function drawPolyline(opt) {
   polyline.depthTest = opt.depthTest;
   polyline.setWidth(opt.width);
   polyline.setAltitudeMethod(opt.altitude);
-  polyline.setAltitude(30);
+  // polyline.setAltitude(10);
+  opt.height ? polyline.setAltitude(opt.height) : polyline.setAltitude(10);
   polyline.setMinDistance(5.0);
   polyline.name = opt.name;
   polyline.dash = opt.dash ? opt.dash : false;

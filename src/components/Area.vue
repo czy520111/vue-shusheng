@@ -103,6 +103,7 @@ const mouseClickEvent = (event) => {
       color: SSmap.Color.fromRgb(83, 255, 26, 255),
       altitude: SSmap.AltitudeMethod.Absolute,
       depthTest: false,
+      height: 1,
       name: "polyline",
     };
     let tLine = drawPolyline(obj);
@@ -144,6 +145,7 @@ const mousemoveEvent = (event) => {
     color: SSmap.Color.fromRgb(83, 255, 26, 255),
     altitude: SSmap.AltitudeMethod.Absolute,
     depthTest: false,
+    height: 1,
     name: "polyline",
   };
   let movePoly = drawPolyline(obj);
@@ -177,6 +179,7 @@ const ContextMenuEvent = () => {
     pointArr: toRaw(pointList),
     color: SSmap.Color.fromRgb(83, 255, 26, 255),
     altitude: SSmap.AltitudeMethod.Absolute,
+    height: 1,
     depthTest: false,
     name: "polyline",
   };

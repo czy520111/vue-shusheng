@@ -200,6 +200,8 @@ const checkEdit = ref(0);
 const cloneFloorList = reactive([]);
 const cloneGeoList = reactive([]);
 const moveBuild = ref(false);
+const nowBuild = ref(0);
+const nowItem = ref(null);
 //几何体
 const pointList = reactive([]);
 const threeList = reactive([]);
@@ -361,9 +363,11 @@ const vector3Offset = (point, { offsetX = 0, offsetY = 0, offsetZ = 0 }) => {
 
 const moveGeo = (item, index) => {
   console.log("moveGeo", item, index);
+  nowBuild.value = index;
+  nowItem.value = item;
   document.getElementById("qtcanvas").style.cursor = "crosshair";
   document.getElementById("qtcanvas").addEventListener("click", (e) => {
-    moveExtru(e, item, index);
+    moveExtru(e, nowItem.value, nowBuild.value);
   });
   moveBuild.value = true;
   ElMessage.info("屏幕选取点移动建筑");
@@ -377,10 +381,10 @@ const moveExtru = (e, item, index) => {
   let centerX = toRaw(item).position._rawValue.x;
   let centerY = toRaw(item).position._rawValue.y;
   let centerZ = toRaw(item).position._rawValue.z;
-  checkEdit.value = index;
+  checkEdit.value = nowBuild.value;
   floorList.length = 0;
   pointList.length = 0;
-  floorGeomList.length = 0;
+  // floorGeomList.length = 0;
   // let length = floorGeomList.length;
   // for (var i = length - 1; i > -1; i--) {
   //   toRaw(floorGeomList[i]).delete();
@@ -389,8 +393,8 @@ const moveExtru = (e, item, index) => {
   // }
   cloneFloorList.length = 0;
   cloneGeoList.length = 0;
-  console.log("editCurrentGeo", item, index);
-  let pointArr = item.allPointList[index];
+  console.log("editCurrentGeo", item, nowBuild.value);
+  let pointArr = item.allPointList[nowBuild.value];
   let geoList = item.geo;
   toRaw(item.edit).forEach((i) => {
     floorList.push(i);
@@ -399,10 +403,10 @@ const moveExtru = (e, item, index) => {
   pointArr.forEach((i) => {
     pointList.push(i);
   });
-  geoList.forEach((i) => {
-    floorGeomList.push(i);
-    cloneGeoList.push(i);
-  });
+  // geoList.forEach((i) => {
+  //   floorGeomList.push(i);
+  //   cloneGeoList.push(i);
+  // });
   // pointList.length = 0;
   // item.pointList.forEach((i) => {
   //   pointList.push(i);
