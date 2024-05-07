@@ -193,7 +193,7 @@ export function drawLine(scene, pointList, tag, color, opacity) {
   var material = new SSmap.Material(); //创建材质
   material.bothSided = true; //双面材质
   material.opacity = color.a; //透明度
-  // material.roughness = 0.6; //粗糙度
+  material.roughness = 0.45; //粗糙度
   material.shadingModel = SSmap.ShadingModel.Unlit; //无光照
   material.color = SSmap.Color.fromRgb(color.r, color.g, color.b, 1); //材质颜色 RGBA
   var renderer = new SSmap.GeometryRenderer(); //创建几何渲染器

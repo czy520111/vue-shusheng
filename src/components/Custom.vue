@@ -198,21 +198,30 @@
           </p>
         </div>
         <div class="bottom-build">
-          <el-button type="primary">完成建筑生成</el-button>
+          <el-button @click="finishBuild" type="primary"
+            >完成建筑生成</el-button
+          >
         </div>
       </div>
+    </div>
+    <div class="picture" v-show="showPic">
+      <el-button @click="takePic" type="primary">拍照</el-button>
     </div>
     <div class="next-button" v-show="showSureButton">
       <el-button type="primary" @click="lastStep" :icon="ArrowLeft"
         >上一步</el-button
       >
+      <!-- <div> -->
       <el-button
+        v-if="steps != 2"
         type="primary"
         :disabled="showNext"
         @click="nextStep"
         :icon="ArrowRight"
         >下一步</el-button
       >
+      <el-button @click="saveProject" v-else type="primary">保存</el-button>
+      <!-- </div> -->
     </div>
     <div class="checktBox">
       <div class="checkBox-content">
@@ -231,6 +240,26 @@
         </div>
       </div>
     </div>
+    <!-- <div class="checktBox1">
+      <div class="checkBox-content">
+        <p class="check-title">厂房指标</p>
+        <div>
+          <p><img src="../images/duigou.png" alt="" />厂房编号</p>
+          <p><img src="../images/duigou.png" alt="" />建筑面积</p>
+          <p><img src="../images/duigou.png" alt="" />建筑样式</p>
+          <p><img src="../images/duigou.png" alt="" />建筑高度</p>
+          <p><img src="../images/duigou.png" alt="" />建筑层高</p>
+          <p><img src="../images/duigou.png" alt="" />屋顶样式</p>
+          <p><img src="../images/duigou.png" alt="" />建筑立面</p>
+        </div>
+        <div class="check-two">
+          <p>{{ floorArea }}平方米</p>
+          <p>3.2/9.5</p>
+          <p>{{ floorHeight * floorNumber }}米/24-100米</p>
+          <p>30%/70%</p>
+        </div>
+      </div>
+    </div> -->
   </div>
 </template>
 
@@ -248,7 +277,11 @@ import ThreeBSP from "../editor/threebsp.js";
 // import ThreeBSP from "../editor/threebsp.js";
 // import ThreeBSP from "threebsp.js";
 // import { ThreeBSP } from "../editor/threebsp.js";
-import { drawPolygonGeometry, drawPolygon3D } from "../editor/draw.js";
+import {
+  drawPolygonGeometry,
+  drawPolygon3D,
+  drawPolyline,
+} from "../editor/draw.js";
 import {
   rotateRectangle,
   drawLine,
@@ -257,6 +290,7 @@ import {
   rotateRectangleVertices,
 } from "../editor/math.js";
 import { ElMessage } from "element-plus";
+import html2canvas from "html2canvas";
 // const ThreeBSP = require("jthreebsp")(THREE);
 // const ThreeBSP = _ThreeBSP(THREE);
 const projectLayer = ref(null);
@@ -282,6 +316,10 @@ const tileFeature = ref(null); //点击时的tiles
 const checkType = ref(0); //点击类型
 const showNext = ref(true);
 const directionVal = reactive([]);
+const steps = ref(0);
+const rotatePoints = reactive([]);
+const nextText = ref("下一步");
+const showPic = ref(false);
 
 //模型的数组
 const floorGeomList = reactive([]);
@@ -427,33 +465,75 @@ const showDeitHandle = (value) => {
 
   changeBuild();
 };
+
+const takePic = () => {
+  console.log("555");
+  let canvas = document.getElementById("qtcanvas");
+  html2canvas(document.body).then(function (canvas) {
+    document.body.appendChild(canvas);
+    var link = document.createElement("a");
+    link.href = canvas.toDataURL("image/png");
+    link.download = "厂区规划图.png";
+    // 触发点击事件，执行下载操作
+    link.click();
+  });
+};
 const lastStep = () => {
-  showEditFloor.value = false;
-  showSureButton.value = false;
-  showContent.value = false;
-  showNumber.value = false;
-  directionVal.length = 0;
-  let feature = toRaw(nowNode.value).feature();
-  feature.enabled = true;
-  feature.parent.enabled = true;
-  feature.parent.parent.enabled = true;
-  toRaw(nowNode.value).enabled = true;
-  toRaw(tileFeature.value).tileset.enabled = true; //设置tiles隐藏
-  let length1 = floorGeomList.length;
-  for (var i = length1 - 1; i > -1; i--) {
-    toRaw(floorGeomList[i]).delete();
-    floorGeomList.splice(i, 1);
-    delete toRaw(floorGeomList[i]);
+  steps.value--;
+  showPic.value = false;
+  if (steps.value == 1) {
+    // showEditFloor.value = true;
+    showContent.value = true;
+    showNext.value = true;
+  } else {
+    showEditFloor.value = false;
+    showSureButton.value = false;
+    showContent.value = false;
+    showNumber.value = false;
+    directionVal.length = 0;
+    let feature = toRaw(nowNode.value).feature();
+    feature.enabled = true;
+    feature.parent.enabled = true;
+    feature.parent.parent.enabled = true;
+    toRaw(nowNode.value).enabled = true;
+    toRaw(tileFeature.value).tileset.enabled = true; //设置tiles隐藏
+    let length1 = floorGeomList.length;
+    for (var i = length1 - 1; i > -1; i--) {
+      toRaw(floorGeomList[i]).delete();
+      floorGeomList.splice(i, 1);
+      delete toRaw(floorGeomList[i]);
+    }
+    toRaw(nowNode.value).setColor(SSmap.Color.fromRgb(0, 0, 255, 150));
+    toRaw(nowNode.value).setSelectedColor(SSmap.Color.fromRgb(0, 0, 255, 128));
+    // toRaw(nowNode.value).setStrokeWidth(3);
+    toRaw(nowNode.value).setStrokeColor(SSmap.Color.fromRgb(0, 0, 255, 150));
   }
-  toRaw(nowNode.value).setColor(SSmap.Color.fromRgb(0, 0, 255, 150));
-  toRaw(nowNode.value).setSelectedColor(SSmap.Color.fromRgb(0, 0, 255, 128));
-  // toRaw(nowNode.value).setStrokeWidth(3);
-  toRaw(nowNode.value).setStrokeColor(SSmap.Color.fromRgb(0, 0, 255, 150));
+
   createEvent();
 };
 
 const nextStep = () => {
   showNext.value = false;
+  if (steps.value == 1) {
+    steps.value = 2;
+    showEditFloor.value = false;
+    showContent.value = false;
+    changeBuild();
+  }
+  if (steps.value == 2) {
+    showPic.value = true;
+    nextText.value = "保存";
+  }
+};
+const saveProject = () => {
+  ElMessage.success("保存成功");
+  showSureButton.value = false;
+  showPic.value = false;
+};
+
+const finishBuild = () => {
+  showNext.value = false;
+  steps.value = 1;
 };
 
 const changeBuild = () => {
@@ -470,8 +550,8 @@ const changeBuild = () => {
     delete toRaw(floorGeomList[i]);
   }
   let boxColor = {
-    r: 161,
-    g: 161,
+    r: 166,
+    g: 172,
     b: 227,
     a: 1,
   };
@@ -479,16 +559,16 @@ const changeBuild = () => {
   let boxColor3;
   if (facadeStyle.value == "石材") {
     boxColor2 = {
-      r: 118,
-      g: 141,
+      r: 122,
+      g: 151,
       b: 227,
       a: 1,
     };
   } else {
     boxColor2 = {
-      r: 0,
-      g: 0,
-      b: 255,
+      r: 122,
+      g: 151,
+      b: 227,
       a: 0.5,
     };
   }
@@ -501,11 +581,25 @@ const changeBuild = () => {
     };
   } else {
     boxColor3 = {
-      r: 144,
-      g: 198,
-      b: 65,
+      r: 87,
+      g: 127,
+      b: 223,
       a: 1,
     };
+  }
+
+  if (steps.value == 2) {
+    boxColor = window.boxColor1;
+    if (facadeStyle.value == "石材") {
+      boxColor2 = window.boxColor2;
+    } else {
+      boxColor2 = window.boxColor5;
+    }
+    if (roomTop.value == "楼顶停车") {
+      boxColor3 = window.boxColor4;
+    } else {
+      boxColor3 = window.boxColor3;
+    }
   }
 
   switch (checkType.value) {
@@ -549,19 +643,37 @@ const changeBuild = () => {
     matrix = SSmap.Matrix4.multiply(matrix, scaleMatrix);
     point = SSmap.Matrix4.multiplyByVector3(matrix, toRaw(point));
     pointArr.push(toRaw(point));
+    rotatePoints.push(toRaw(point));
   });
+  // rotatePoints = pointArr;
   var altitude = SSmap.AltitudeMethod.OnTerrain;
-  var obj1 = {
-    alpha: 100, //边界透明度
-    pointArr: pointArr, //点坐标
-    color: SSmap.Color.fromRgb(0, 102, 255, 200), //填充颜色
-    borColor: SSmap.Color.fromRgb(83, 255, 26, 255), //边界颜色
-    altitude: altitude, //海拔高度模式
-    name: "mianhuancong", //名称
-    width: 1, //边界宽度
-  };
-  var Aentity = drawPolygon3D(obj1);
-  floorGeomList.push(Aentity);
+  if (steps.value == 2) {
+    pointArr.push(pointArr[0]);
+    var polylineObj = {
+      width: 3,
+      alpha: 1,
+      pointArr: pointArr,
+      color: SSmap.Color.fromRgb(0, 0, 255, 200),
+      altitude: SSmap.AltitudeMethod.Absolute,
+      dash: true,
+      depthTest: false,
+      name: "move",
+    };
+    var polyline = drawPolyline(polylineObj);
+    floorGeomList.push(polyline);
+  } else {
+    var obj1 = {
+      alpha: 100, //边界透明度
+      pointArr: pointArr, //点坐标
+      color: SSmap.Color.fromRgb(0, 102, 255, 200), //填充颜色
+      borColor: SSmap.Color.fromRgb(0, 102, 255, 200), //边界颜色
+      altitude: altitude, //海拔高度模式
+      name: "mianhuancong", //名称
+      width: 0, //边界宽度
+    };
+    var Aentity = drawPolygon3D(obj1);
+    floorGeomList.push(Aentity);
+  }
 };
 
 const oneBuild = (
@@ -1755,8 +1867,8 @@ const addOneDepth = () => {
 };
 const deTwoDepth = () => {
   twoDepth.value -= 8;
-  if (twoDepth.value <= 20) {
-    twoDepth.value = 20;
+  if (twoDepth.value <= 24) {
+    twoDepth.value = 24;
     changeBuild();
     ElMessage.warning("已经到极限了");
     return;
@@ -1769,8 +1881,8 @@ const addTwoDepth = () => {
 };
 const deThreeDepth = () => {
   threeDepth.value -= 8;
-  if (threeDepth.value <= 20) {
-    threeDepth.value = 20;
+  if (threeDepth.value <= 24) {
+    threeDepth.value = 24;
     changeBuild();
     ElMessage.warning("已经到极限了");
     return;
@@ -1783,8 +1895,8 @@ const addThreeDepth = () => {
 };
 const deFourDepth = () => {
   fourDepth.value -= 8;
-  if (fourDepth.value <= 20) {
-    fourDepth.value = 20;
+  if (fourDepth.value <= 24) {
+    fourDepth.value = 24;
     changeBuild();
     ElMessage.warning("已经到极限了");
     return;
@@ -2039,10 +2151,51 @@ onMounted(() => {
       }
     }
   }
+  .checktBox1 {
+    position: absolute;
+    left: 80vw;
+    width: 400px;
+    top: 30vh;
+    box-sizing: border-box;
+    background-color: #ffffffb3;
+    border-radius: 0.26042rem;
+    box-shadow: 0 0.625rem 1.5625rem #9c9db29c;
+    padding: 0.98958rem 1.09375rem 0.98958rem 0.9375rem;
+    .check-title {
+      color: #674ae5;
+      font-weight: bolder;
+      position: absolute;
+      margin-top: -20px;
+      font-size: 20px;
+    }
+    .checkBox-content {
+      margin-top: 20px;
+      display: flex;
+      // flex-direction: column;
+      // justify-content: space-between;
+      div {
+        width: 200px;
+      }
+      .check-two {
+        color: #000;
+        font-weight: 900;
+      }
+    }
+  }
   .bottom-build {
     // position: absolute;
     // bottom: 10px;
     margin-left: -80px;
+  }
+  .picture {
+    position: absolute;
+    top: 1100px;
+    left: 1100px;
+    .el-button {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+    }
   }
 }
 </style>

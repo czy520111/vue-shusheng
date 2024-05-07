@@ -109,8 +109,8 @@ export const Tileset = {
         console.log("renderer", renderer.material, roug, opacity, color, text);
       });
     });
-    window.boxColor1 = { r: 227, g: 225, b: 219, a: 1 };
-    window.boxColor2 = { r: 255, g: 255, b: 255 };
+    window.boxColor1 = { r: 237, g: 235, b: 227, a: 1 }; //外围色
+    window.boxColor2 = { r: 203, g: 213, b: 211, a: 1 };
     window.boxColor3 = {
       //花园色
       r: 199,
@@ -124,6 +124,13 @@ export const Tileset = {
       g: 195,
       b: 151,
       a: 1,
+    };
+    window.boxColor5 = {
+      //玻璃
+      r: 219,
+      g: 255,
+      b: 255,
+      a: 0.75,
     };
     // console.log(bbb, "889988");
   },
