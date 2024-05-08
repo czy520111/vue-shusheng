@@ -24,7 +24,9 @@ export function addBillboard(opt) {
     bbEntity.setAltitudeMethod(opt.altitudeMethod);
   }
   //设置属性 属性的value只能是字符串类型
-  bbEntity.addProperty("name", "点名称");
+  opt.name
+    ? bbEntity.addProperty("name", opt.name)
+    : bbEntity.addProperty("name", "Billboardpoint");
   bbEntity.addProperty("pos", "蛇口红树湾");
 
   bbEntity.setCollection(SSmap.BillboardCollection.Instance()); //存储到Collection集合中

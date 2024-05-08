@@ -223,7 +223,7 @@
       <el-button @click="saveProject" v-else type="primary">保存</el-button>
       <!-- </div> -->
     </div>
-    <div class="checktBox">
+    <div class="checktBox" v-if="steps != 0">
       <div class="checkBox-content">
         <p class="check-title">地块合格检查</p>
         <div>

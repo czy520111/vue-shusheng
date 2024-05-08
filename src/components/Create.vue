@@ -5,7 +5,7 @@
       <div class="build">
         <p>建筑名称</p>
         <!-- <el-icon><Close /></el-icon> -->
-        <el-button :icon="Close" @click="showContent = false" circle />
+        <el-button :icon="Close" @click="closeContent" circle />
         <div class="build-img">
           <el-tooltip content="保存" placement="top">
             <el-button @click="addList" :icon="Document" circle />
@@ -182,7 +182,9 @@ import {
   drawLabel,
   drawPolygonGeometry,
   drawPolygon3D,
+  addBillboard,
 } from "../editor/draw.js";
+import { feature } from "@turf/turf";
 
 const showContent = ref(false);
 const dialogVisible = ref(false);
@@ -202,6 +204,8 @@ const cloneGeoList = reactive([]);
 const moveBuild = ref(false);
 const nowBuild = ref(0);
 const nowItem = ref(null);
+const checkPointVal = ref(null);
+const editBuild = ref(false);
 //几何体
 const pointList = reactive([]);
 const threeList = reactive([]);
@@ -210,6 +214,7 @@ const polyList = reactive([]);
 const floorGeomList = reactive([]);
 const allGeoList = reactive([]); //所有创建几何体的集合
 const allPointList = reactive([]); //所有创建几何体形状点位的集合
+const topPointList = reactive([]); //顶层建筑点位
 
 const closeBuilid = () => {
   console.log(
@@ -262,6 +267,7 @@ const addList = () => {
     ElMessage.info("当前没有可保存的建筑");
     return;
   }
+  savePoint();
   if (editBUtton.value) {
     reSave();
     editBUtton.value = false;
@@ -281,6 +287,10 @@ const addList = () => {
     });
   }
 };
+const closeContent = () => {
+  showContent.value = false;
+  savePoint();
+};
 const reSave = () => {
   // debugger;
   allGeoList[checkEdit.value] = [...floorGeomList];
@@ -290,7 +300,7 @@ const reSave = () => {
   // geoList[checkEdit.value].position = { ...centerPoint };
   geoList[checkEdit.value].allPointList = allPointList;
   showInfo.value = false;
-
+  redrawExtru();
   // allGeoList.unshift([...floorGeomList]);
   // allPointList.unshift([...pointList]);
   // inputValue.value = "建筑" + (geoList.length + 1);
@@ -440,6 +450,7 @@ const moveExtru = (e, item, index) => {
 
 const openDraw = () => {
   showInfo.value = true;
+  editBuild.value = true;
   floorList.length = 0;
   pointList.length = 0;
   floorGeomList.length = 0;
@@ -458,9 +469,12 @@ const floorMin = () => {
 };
 const floorMax = (index) => {
   floorvalue.value = floorvalue.value + 1;
+  console.log(floorList, "floorList");
+  let poins = floorList[floorList.length - 1].pointArr;
   floorList.push({
     name: floorList.length + 1 + "层",
     input: peiInput.value * 1,
+    pointArr: poins,
   });
   let obj = {
     height: peiInput.value, //高度
@@ -541,6 +555,7 @@ const removeFloor = (val) => {
   let lastElement = toRaw(floorGeomList)[toRaw(floorGeomList).length - 1];
   floorGeomList.pop();
   lastElement.delete();
+  console.log(floorList, "floor");
   redrawExtru();
 };
 const cutHeight = (item, index) => {
@@ -559,8 +574,8 @@ const changeHeight = (item, index) => {
   redrawExtru();
 };
 const redrawExtru = (number) => {
-  let exArr = [];
-  console.log("redrawExtru", pointList, allPointList);
+  // let exArr = [];
+  console.log("redrawExtru", pointList, allPointList, floorList);
   // if (number) {
   //   floorGeomList.length = 0;
   //   // pointList.length = 0;
@@ -571,10 +586,10 @@ const redrawExtru = (number) => {
   //     floorGeomList.push(i);
   //   });
   // }
-  pointList.forEach((item) => {
-    exArr.push(toRaw(item).toCartesian3());
-  });
-
+  // pointList.forEach((item) => {
+  //   exArr.push(toRaw(item).toCartesian3());
+  // });
+  topPointList.length = 0;
   let length = floorGeomList.length;
   for (var i = length - 1; i > -1; i--) {
     toRaw(floorGeomList[i]).delete();
@@ -583,24 +598,169 @@ const redrawExtru = (number) => {
   }
   let liftHeight = 0;
   for (let i = 0; i < floorList.length; i++) {
+    let exArr = [];
+    floorList[i].pointArr.forEach((item) => {
+      exArr.push(toRaw(item).toCartesian3());
+    });
     let item = floorList[i];
+    let points = [];
+    floorList[i].pointArr.forEach((item) => {
+      points.push(toRaw(item));
+    });
 
-    let obj = {
-      height: item.input * 10, ////高度
-      alpha: 1, //透明度
-      pointArr: exArr,
-      color: SSmap.Color.fromRgb(255, 255, 255, 255), //填充颜色
-      name: "pickpolygon",
-      altitude: liftHeight * 10, //建筑的海拔高度 z轴
-    };
+    let obj;
+    if (i == floorList.length - 1) {
+      obj = {
+        height: item.input * 10, ////高度
+        alpha: 1, //透明度
+        pointArr: exArr,
+        color: SSmap.Color.fromRgb(255, 255, 255, 255), //填充颜色
+        name: "tPoly",
+        altitude: liftHeight * 10, //建筑的海拔高度 z轴
+      };
+      if (editBuild.value) {
+        let pps = points;
+        pps.push(points[0]);
+        let lineObj = {
+          width: 3,
+          alpha: 1,
+          pointArr: pps,
+          color: SSmap.Color.fromRgb(83, 255, 26, 255),
+          altitude: SSmap.AltitudeMethod.Absolute,
+          depthTest: false,
+          height: liftHeight * 10 + item.input * 10,
+          name: "tLine",
+        };
+        let tLine = drawPolyline(lineObj);
+        // let lineObj1 = {
+        //   width: 3,
+        //   alpha: 1,
+        //   pointArr: pps,
+        //   color: SSmap.Color.fromRgb(83, 255, 26, 255),
+        //   altitude: SSmap.AltitudeMethod.Absolute,
+        //   depthTest: false,
+        //   height: liftHeight * 10,
+        //   name: "tLine",
+        // };
+        // let tLine1 = drawPolyline(lineObj1);
+
+        floorGeomList.push(tLine);
+        points.forEach((pp, index) => {
+          let pointObj = {
+            position: toRaw(pp), //坐标
+            name: "tPoint",
+            url: "src/images/circle.png", //路径
+            scale: 0.5, //比例
+            altitude: liftHeight * 10 + item.input * 10, //海拔，非必填
+            // imageWidth:0,
+            // imageHeight:0,
+            altitudeMethod: SSmap.AltitudeMethod.Absolute, //Absolute 绝对海拔  OnTerrain 贴地 RelativeToTerrain 贴地并相对海拔
+          };
+          // if (pointList.length == index) return;
+          let tPoint = addBillboard(pointObj);
+
+          floorGeomList.push(tPoint);
+          topPointList.push(tPoint);
+        });
+
+        document
+          .getElementById("qtcanvas")
+          .addEventListener("mousedown", checkPoint);
+      }
+    } else {
+      obj = {
+        height: item.input * 10, ////高度
+        alpha: 1, //透明度
+        pointArr: exArr,
+        color: SSmap.Color.fromRgb(255, 255, 255, 255), //填充颜色
+        name: "pickpolygon",
+        altitude: liftHeight * 10, //建筑的海拔高度 z轴
+      };
+    }
+
     liftHeight += item.input;
     totalHeight.value = liftHeight;
     let extru = drawPolygonGeometry(obj);
     floorGeomList.push(extru);
   }
 };
+//移动最上层建筑
+const checkPoint = () => {
+  let feature = window.GlobalViewer.scene.getFeatureByMouse();
+  if (!feature) return;
+  let name = feature.getProperty("name");
+  console.log("checkPoint", feature, name);
+  if (name == "tPoint") {
+    let cameraCtrl = GlobalViewer.scene.mainCamera.cameraController();
+    cameraCtrl.enableInputs = false;
+    ElMessage.info("选中点位");
+    // document
+    //   .getElementById("qtcanvas")
+    //   .addEventListener("mousemove", movePoint);
+    checkPointVal.value = feature;
+    document
+      .getElementById("qtcanvas")
+      .addEventListener("mousemove", movePoint);
+    document.getElementById("qtcanvas").style.cursor = "pointer";
+
+    document.getElementById("qtcanvas").addEventListener("mouseup", mouseUp);
+  }
+};
+const movePoint = (e) => {
+  let point = getWorldPosition(e);
+  // let feature = window.GlobalViewer.scene.getFeatureByMouse();
+  // if (!feature) return;
+  // let name = feature.getProperty("name");
+  // if (!feature && name != "tPoint") return;
+  // if (name == "tPoint") {
+  console.log("movePoint", point);
+  toRaw(checkPointVal.value).parent.position = point;
+  updatePoly();
+  // }
+};
+const updatePoly = () => {
+  console.log(pointList, floorGeomList);
+  console.log("updatePoly", toRaw(topPointList)[0].position.x);
+  pointList.length = 0;
+  topPointList.forEach((item) => {
+    pointList.push(toRaw(item).position);
+  });
+  floorList[floorList.length - 1].pointArr = [...pointList];
+  // redrawExtru();
+  // floorGeomList.forEach((item) => {
+  //   if (item.name == "tPoint") {
+  //     pointList.push(toRaw(item).position);
+  //   }
+  // });
+  // feature.delete();
+};
+const mouseUp = () => {
+  redrawExtru();
+  // document
+  //   .getElementById("qtcanvas")
+  //   .removeEventListener("mousedown", checkPoint);
+  document
+    .getElementById("qtcanvas")
+    .removeEventListener("mousemove", movePoint);
+  document.getElementById("qtcanvas").style.cursor = "default";
+  let cameraCtrl = GlobalViewer.scene.mainCamera.cameraController();
+  cameraCtrl.enableInputs = true;
+};
+
+const savePoint = () => {
+  editBuild.value = false;
+  document.getElementById("qtcanvas").removeEventListener("click", checkPoint);
+  floorGeomList.forEach((item) => {
+    if (item.name == "tPoint" || item.name == "tLine") {
+      // debugger;
+      toRaw(item).enabled = false;
+    }
+  });
+};
+
 const editCurrentGeo = (item, index) => {
   editBUtton.value = true;
+  editBuild.value = true;
   if (showInfo.value) {
     ElMessage.info("建筑正在编辑中");
     return;
@@ -689,7 +849,8 @@ const mousemoveEvent = (event) => {
 const ContextMenuEvent = () => {
   if (pointList.length < 3) return;
   console.log("ContextMenuEvent");
-  pointList.push(pointList[0]);
+  // pointList.push(pointList[0]);
+  floorList[0].pointArr = [...pointList];
   let obj = {
     width: 3,
     alpha: 1,
