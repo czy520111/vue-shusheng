@@ -768,7 +768,7 @@ onMounted(() => {
 <style lang="scss" scoped>
 .create {
   position: absolute;
-  top: 62px;
+  top: 6px;
   left: 520px;
   width: 300px;
   height: 20px;

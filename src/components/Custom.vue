@@ -204,7 +204,7 @@
         </div>
       </div>
     </div>
-    <div class="picture" v-show="showPic">
+    <div class="picture">
       <el-button @click="takePic" type="primary">拍照</el-button>
     </div>
     <div class="next-button" v-show="showSureButton">
@@ -466,18 +466,59 @@ const showDeitHandle = (value) => {
   changeBuild();
 };
 
+// const takePic = () => {
+//   console.log("555");
+//   // let canvas = document.getElementById("qtcanvas");
+//   html2canvas(document.body).then(function (canvas) {
+//     // document.body.appendChild(canvas);
+//     console.log(canvas, "canvas");
+//     let canvas1 = document.getElementById("qtcanvas");
+//     var link = document.createElement("a");
+//     link.href = canvas.toDataURL();
+//     link.download = "厂区规划图.png";
+//     // 触发点击事件，执行下载操作
+//     link.click();
+//   });
+// };
+
 const takePic = () => {
-  console.log("555");
-  let canvas = document.getElementById("qtcanvas");
-  html2canvas(document.body).then(function (canvas) {
-    document.body.appendChild(canvas);
-    var link = document.createElement("a");
-    link.href = canvas.toDataURL("image/png");
-    link.download = "厂区规划图.png";
-    // 触发点击事件，执行下载操作
-    link.click();
+  let el = document.getElementById("qtcanvas");
+  let opts = {
+    width: el.offsetWidth,
+    height: el.offsetHeight,
+    useCORS: true, // 是否尝试使用 CORS 从服务器加载图像
+    allowTaint: false, // 是否允许跨源图像污染画布
+  };
+  html2canvas(el, opts).then((canvas) => {
+    let imgData = canvas.toDataURL("image/png"); // 转base64
+    fileDownload(imgData);
   });
 };
+
+// 下载图片方法
+const fileDownload = (downloadUrl) => {
+  let aLink = document.createElement("a");
+  aLink.style.display = "none";
+  aLink.href = URL.createObjectURL(dataURIToBlob(downloadUrl));
+  debugger;
+  aLink.download = "img.png";
+  document.body.appendChild(aLink);
+  aLink.click();
+  document.body.removeChild(aLink);
+};
+
+// base64转blob方法
+const dataURIToBlob = (dataURI) => {
+  let binStr = atob(dataURI.split(",")[1]),
+    len = binStr.length,
+    arr = new Uint8Array(len);
+
+  for (var i = 0; i < len; i++) {
+    arr[i] = binStr.charCodeAt(i);
+  }
+  return new Blob([arr]);
+};
+
 const lastStep = () => {
   steps.value--;
   showPic.value = false;

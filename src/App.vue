@@ -45,21 +45,14 @@
       </div> -->
       <div class="tool-box">
         <p>测量</p>
-        <div>
-          <Measurement v-if="meausreVal" />
-          <el-button
-            v-else
-            type="primary"
-            @click="changeComponent('meausreVal')"
-            >线长</el-button
-          >
-        </div>
-        <div>
-          <Coordinate v-if="coorVal" />
-          <el-button v-else type="primary" @click="changeComponent('coorVal')"
-            >坐标</el-button
-          >
-        </div>
+        <!-- <div> -->
+        <Measurement />
+
+        <!-- </div> -->
+        <!-- <div> -->
+        <Coordinate />
+
+        <!-- </div> -->
 
         <Area />
         <Volume />
@@ -73,7 +66,7 @@
 
 <script setup>
 import Measurement from "./components/Measurement.vue";
-import Coordinate from "./components/Coordinate.vue";
+import Coordinate from "./components/coordinate.vue";
 import Area from "./components/Area.vue";
 import Volume from "./components/Volume.vue";
 import Create from "./components/Create.vue";
@@ -205,6 +198,11 @@ canvas {
   left: 200px;
   top: 10px;
   padding: 5px;
-  background-color: rgba(0, 0, 0, 0.7);
+  /* background-color: rgba(0, 0, 0, 0.7); */
+  width: 500px;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  color: white;
 }
 </style>
