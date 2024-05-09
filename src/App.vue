@@ -65,6 +65,8 @@
 </template>
 
 <script setup>
+import SSWebChannel from "../SSWebChannel.js";
+import emitter from "./libs/emitter.js";
 import Measurement from "./components/Measurement.vue";
 import Coordinate from "./components/coordinate.vue";
 import Area from "./components/Area.vue";
@@ -124,6 +126,21 @@ const removeTileset = () => {
 };
 
 onMounted(() => {
+  // let canvasEl = document.querySelector(".viewer-container");
+
+  // new SSWebChannel(canvasEl, (channel) => {
+  //   channel.importModule("src/native/main.js", "Native", () => {
+  //     window.GlobalViewer.canvasEl = canvasEl;
+
+  //     //webview环境全局变量
+  //     window.isWebview = true;
+
+  //     //初始化完成
+  //     // window.Web.initMap();
+  //     emitter.emit("initMap");
+  //   });
+  // });
+
   qtLoader({
     el: container.value,
   }).then(([SSmap, GlobalViewer]) => {

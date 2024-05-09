@@ -1,7 +1,8 @@
 <template>
   <div class="custom">
     <el-button type="primary" @click="initTiles">空间定制</el-button>
-    <div class="show-info" v-show="showNumber">
+    <div class="bubbleContent"></div>
+    <div class="show-info">
       <div class="shuxing">
         <p>厂房编号</p>
         <p>地块编号</p>
@@ -288,6 +289,7 @@ import {
   rotationEntity,
   calculateSquareVertices,
   rotateRectangleVertices,
+  getWorldPosition,
 } from "../editor/math.js";
 import { ElMessage } from "element-plus";
 import html2canvas from "html2canvas";
@@ -320,6 +322,8 @@ const steps = ref(0);
 const rotatePoints = reactive([]);
 const nextText = ref("下一步");
 const showPic = ref(false);
+const HtmldomList = reactive([]);
+const videoInterval = ref(null);
 
 //模型的数组
 const floorGeomList = reactive([]);
@@ -413,6 +417,7 @@ const mouseClickEvent = (e) => {
     toRaw(nowNode.value).setStrokeColor(SSmap.Color.fromRgb(0, 0, 255, 150));
   }
   if (feature) {
+    createDomLabel(e);
     let dire = feature5.tileset.rectangle;
     let southwest = dire.southwest().toVector3();
     let southeast = dire.southeast().toVector3();
@@ -439,10 +444,13 @@ const mouseClickEvent = (e) => {
 
 const showInfo = (e) => {
   showNumber.value = true;
+
   document.querySelector(".show-info").style.marginLeft = e.x + "px";
   document.querySelector(".show-info").style.marginTop = e.y + "px";
 };
 const showCont = () => {
+  let elem = document.querySelector(".show-info");
+  elem.style.display = "none";
   showContent.value = true;
   showSureButton.value = true;
   showNumber.value = false;
@@ -1890,6 +1898,28 @@ const fourBuild = (
     i.transform.matrix = matrix4;
   });
 };
+
+const createDomLabel = (e) => {
+  //画div盒子
+  let elem = document.querySelector(".show-info");
+  elem.style.display = "flex";
+  let world = getWorldPosition(e);
+  let tohic = world.toCartesian3().toVector3();
+  let frameAction = new SSmap.FrameAction();
+  frameAction.onTriggered(() => {
+    //每一帧改变div的位置
+    // debugger;
+    var xyposition =
+      window.GlobalViewer.scene.mainCamera.worldToScreenPoint(tohic);
+    elem.style.bottom = 0.1 - xyposition.y - elem.clientHeight + "px";
+    elem.style.left = 0.1 + xyposition.x - elem.clientWidth * 3.5 + "px";
+    // console.log("456456");
+  });
+  scene.rootEntity.addComponent(frameAction);
+  // HtmldomList.push(opt);
+  // addHtmldom();
+};
+
 //功能点
 //进深增加
 const deOneDepth = () => {
@@ -2041,9 +2071,10 @@ onMounted(() => {
 .custom {
   //   position: absolute;
   .show-info {
+    display: none;
     position: absolute;
     background-color: #fff9;
-    display: flex;
+    // display: flex;
     align-items: center;
     justify-content: space-around;
     // flex-direction: column;
@@ -2069,7 +2100,7 @@ onMounted(() => {
   }
   .show-content {
     position: absolute;
-    top: 1150px;
+    bottom: -86vh;
     ul {
       list-style: none;
       display: flex;

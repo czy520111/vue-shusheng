@@ -1,6 +1,11 @@
 <template>
   <div class="coordinate">
     <el-button type="primary" @click="setPoint()">坐标</el-button>
+    <div @click="getTextEvent" class="text-info">
+      <p>经度:{{ longitude }}</p>
+      <p>维度:{{ latitude }}</p>
+      <p>高度:{{ height }}</p>
+    </div>
   </div>
 </template>
 
@@ -13,6 +18,9 @@ import { addBillboard } from "../editor/draw";
 const store = useUsersStore();
 const pointList = reactive([]);
 const bbList = reactive([]);
+const longitude = ref(0);
+const latitude = ref(0);
+const height = ref(0);
 const setPoint = () => {
   clearMeasure();
   document
@@ -61,6 +69,9 @@ const mouseClickEvent = (event) => {
   var Billboard = addBillboard(Geoobj);
   bbList.push(Billboard);
   console.log("la", la);
+  latitude.value = la.latitude.toFixed(6);
+  longitude.value = la.longitude.toFixed(6);
+  height.value = la.height.toFixed(2);
   let obj = {
     point,
     text: `
@@ -68,31 +79,47 @@ const mouseClickEvent = (event) => {
     纬度:${la.latitude.toFixed(6)} 
     高度:${la.height.toFixed(2)}`,
   };
-  drawLabel(obj);
+  // drawLabel(obj);
+
+  let elem = document.querySelector(".text-info");
+  elem.style.display = "block";
+  let world = getWorldPosition(event);
+  let tohic = world.toCartesian3().toVector3();
+  let frameAction = new SSmap.FrameAction();
+  frameAction.onTriggered(() => {
+    //每一帧改变div的位置
+    // debugger;
+    var xyposition =
+      window.GlobalViewer.scene.mainCamera.worldToScreenPoint(tohic);
+    elem.style.bottom = 0.1 - xyposition.y + elem.clientHeight / 2 + "px";
+    elem.style.left = 0.1 + xyposition.x - elem.clientWidth * 1.8 + "px";
+    console.log("456456");
+  });
+  scene.rootEntity.addComponent(frameAction);
   //   drawShpere(la);
   ContextMenuEvent();
   getText(event);
 };
 const getText = (event) => {
-  document.getElementById("qtcanvas").addEventListener("click", getTextEvent);
+  // document.getElementById("qtcanvas").addEventListener("click", getTextEvent);
   document.getElementById("qtcanvas").addEventListener("mousemove", mouseMove);
   //   let point = getWorldPosition(event);
   //   console.log("point", point);
 };
 const getTextEvent = (event) => {
-  var e = event;
-  if (e) {
-    let feature = window.GlobalViewer.scene.getFeatureByMouse();
-    if (feature) {
-      //   debugger;
-      //   console.log("获取线图层属性");
-      //   console.log(feature.parent.text);
-      let text = feature.parent.text;
-      navigator.clipboard.writeText(text);
-      ElMessage.success("复制成功");
-      //   this.lineLayerPick(feature);
-    }
-  }
+  // var e = event;
+  // if (e) {
+  //   let feature = window.GlobalViewer.scene.getFeatureByMouse();
+  //   if (feature) {
+  //   debugger;
+  //   console.log("获取线图层属性");
+  //   console.log(feature.parent.text);
+  let el = document.querySelector(".text-info");
+  let text = el.innerText;
+  navigator.clipboard.writeText(text);
+  ElMessage.success("复制成功");
+  //   }
+  // }
 };
 const mouseMove = (e) => {
   let feature = window.GlobalViewer.scene.getFeatureByMouse();
@@ -102,44 +129,6 @@ const mouseMove = (e) => {
     document.getElementById("qtcanvas").style.cursor = "default";
   }
 };
-const drawShpere = (obj) => {
-  let sphere = new SSmap.Sphere3D();
-  sphere.radii = SSmap.Vector3.create(5.0, 5.0, 5.0);
-  sphere.color = SSmap.Color.fromRgb(0, 255, 0, 255);
-  sphere.position = SSmap.Cartographic.fromDegrees(
-    obj.longitude,
-    obj.latitude,
-    obj.height
-  ).toVector3();
-  sphere.create();
-
-  let sphereEntity = sphere.createEntity();
-  sphereEntity.parent = SSmap.Entity.root();
-  //   Utils.sphere3d = sphereEntity;
-};
-const drawLabel = (obj) => {
-  let label3d = new SSmap.Label3D();
-  label3d.position = obj.point;
-
-  //   label3d.frameUrl = frameUrl;
-  //   label3d.url = imageUrl;
-  label3d.objectName = "label";
-  label3d.text = obj.text;
-  label3d.background = SSmap.Color.fromRgb(46, 183, 192, 200);
-  label3d.imageWidth = 24;
-  label3d.imageHeight = 20;
-  label3d.fontSize = 12;
-  label3d.mix = true;
-  label3d.setAltitude(20);
-  label3d.setAltitudeMethod(SSmap.AltitudeMethod.Absolute);
-  label3d.lineColor = SSmap.Color.fromRgb(0, 0, 200, 200);
-  label3d.lineToGround = true;
-  label3d.setCollection(SSmap.BillboardCollection.Instance());
-
-  //   let sphereEntity = label3d.createEntity();
-  //   sphereEntity.parent = SSmap.Entity.root();
-  pointList.push(label3d);
-};
 const ContextMenuEvent = (event) => {
   document.getElementById("qtcanvas").style.cursor = "default";
   document
@@ -148,9 +137,9 @@ const ContextMenuEvent = (event) => {
   document
     .getElementById("qtcanvas")
     .removeEventListener("contextmenu", ContextMenuEvent);
-  document
-    .getElementById("qtcanvas")
-    .removeEventListener("click", getTextEvent);
+  // document
+  //   .getElementById("qtcanvas")
+  //   .removeEventListener("click", getTextEvent);
 };
 
 onUnmounted(() => {
@@ -159,4 +148,13 @@ onUnmounted(() => {
 </script>
 
 <style lang="scss" scoped>
+.text-info {
+  cursor: pointer;
+  position: absolute;
+  display: none;
+  background: #000;
+  border-radius: 8px;
+  padding: 8px;
+  min-width: 140px;
+}
 </style>
