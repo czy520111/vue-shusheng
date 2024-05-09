@@ -269,8 +269,24 @@ const addList = () => {
   }
   savePoint();
   if (editBUtton.value) {
-    reSave();
+    // reSave();
     editBUtton.value = false;
+    showInfo.value = false;
+    allGeoList.shift();
+    allGeoList.unshift([...floorGeomList]);
+    allPointList.shift();
+    allPointList.unshift([...pointList]);
+    inputValue.value = "建筑" + geoList.length;
+    geoList.shift();
+    geoList.unshift({
+      name: "建筑" + (geoList.length + 1),
+      checked: false,
+      edit: [...floorList],
+      geo: [...floorGeomList],
+      position: { ...centerPoint },
+      allPointList: allPointList,
+      pointList: [...pointList],
+    });
   } else {
     showInfo.value = false;
     allGeoList.unshift([...floorGeomList]);
@@ -292,13 +308,12 @@ const closeContent = () => {
   savePoint();
 };
 const reSave = () => {
-  // debugger;
   allGeoList[checkEdit.value] = [...floorGeomList];
   allPointList[checkEdit.value] = [...pointList];
   geoList[checkEdit.value].edit = [...floorList];
   geoList[checkEdit.value].geo = [...floorGeomList];
   // geoList[checkEdit.value].position = { ...centerPoint };
-  geoList[checkEdit.value].allPointList = allPointList;
+  geoList[checkEdit.value].allPointList = [...allPointList];
   showInfo.value = false;
   redrawExtru();
   // allGeoList.unshift([...floorGeomList]);
@@ -598,6 +613,7 @@ const redrawExtru = (number) => {
   }
   let liftHeight = 0;
   for (let i = 0; i < floorList.length; i++) {
+    if (floorList[i].pointArr == undefined) return;
     let exArr = [];
     floorList[i].pointArr.forEach((item) => {
       exArr.push(toRaw(item).toCartesian3());
@@ -618,8 +634,11 @@ const redrawExtru = (number) => {
         name: "tPoly",
         altitude: liftHeight * 10, //建筑的海拔高度 z轴
       };
-      if (editBuild.value) {
-        let pps = points;
+      if (showInfo.value) {
+        let pps = [];
+        points.forEach((item) => {
+          pps.push(toRaw(item));
+        });
         pps.push(points[0]);
         let lineObj = {
           width: 3,
@@ -749,7 +768,11 @@ const mouseUp = () => {
 
 const savePoint = () => {
   editBuild.value = false;
-  document.getElementById("qtcanvas").removeEventListener("click", checkPoint);
+  // document.getElementById("qtcanvas").removeEventListener("mousedown", checkPoint);
+  document
+    .getElementById("qtcanvas")
+    .removeEventListener("mousedown", checkPoint);
+  document.getElementById("qtcanvas").removeEventListener("mouseup", mouseUp);
   floorGeomList.forEach((item) => {
     if (item.name == "tPoint" || item.name == "tLine") {
       // debugger;
@@ -771,12 +794,12 @@ const editCurrentGeo = (item, index) => {
   floorList.length = 0;
   pointList.length = 0;
   floorGeomList.length = 0;
-  // let length = floorGeomList.length;
-  // for (var i = length - 1; i > -1; i--) {
-  //   toRaw(floorGeomList[i]).delete();
-  //   floorGeomList.splice(i, 1);
-  //   delete toRaw(floorGeomList[i]);
-  // }
+  let length = floorGeomList.length;
+  for (var i = length - 1; i > -1; i--) {
+    toRaw(floorGeomList[i]).delete();
+    floorGeomList.splice(i, 1);
+    delete toRaw(floorGeomList[i]);
+  }
   cloneFloorList.length = 0;
   cloneGeoList.length = 0;
   console.log("editCurrentGeo", item, index);
@@ -795,6 +818,7 @@ const editCurrentGeo = (item, index) => {
   });
 
   showInfo.value = true;
+  redrawExtru();
 };
 
 const mousemoveEvent = (event) => {
