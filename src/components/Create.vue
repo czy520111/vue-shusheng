@@ -236,7 +236,37 @@ const closeBuilid = () => {
   //     floorGeomList.push(i);
   //   });
   // }
-  reSave();
+  // editBUtton.value
+  // if (!editBUtton.value) {
+  //   let length = floorGeomList.length;
+  //   for (var i = length - 1; i > -1; i--) {
+  //     toRaw(floorGeomList[i]).delete();
+  //     floorGeomList.splice(i, 1);
+  //     delete toRaw(floorGeomList[i]);
+  //   }
+  // }
+  // if (geoList.length > 0) {
+  //   savePoint();
+  //   editBUtton.value = false;
+  //   showInfo.value = false;
+  //   allGeoList.shift();
+  //   allGeoList.unshift([...floorGeomList]);
+  //   allPointList.shift();
+  //   allPointList.unshift([...pointList]);
+  //   inputValue.value = "建筑" + geoList.length;
+  //   geoList.shift();
+  //   geoList.unshift({
+  //     name: "建筑" + (geoList.length + 1),
+  //     checked: false,
+  //     edit: [...floorList],
+  //     geo: [...floorGeomList],
+  //     position: { ...centerPoint },
+  //     allPointList: allPointList,
+  //     pointList: [...pointList],
+  //   });
+  // }
+  editBUtton.value = true;
+  addList();
   showInfo.value = false;
 };
 
@@ -268,6 +298,7 @@ const addList = () => {
     return;
   }
   savePoint();
+  let parentEntity = new SSmap.Entity();
   if (editBUtton.value) {
     // reSave();
     editBUtton.value = false;
@@ -391,37 +422,85 @@ const moveGeo = (item, index) => {
   nowBuild.value = index;
   nowItem.value = item;
   document.getElementById("qtcanvas").style.cursor = "crosshair";
-  document.getElementById("qtcanvas").addEventListener("click", (e) => {
-    moveExtru(e, nowItem.value, nowBuild.value);
-  });
+  document.getElementById("qtcanvas").addEventListener("click", moveExtru);
   moveBuild.value = true;
   ElMessage.info("屏幕选取点移动建筑");
 };
 
-const moveExtru = (e, item, index) => {
+const moveExtru = (e) => {
   if (!moveBuild.value) return;
-  let point = getWorldPosition(e);
+  let point = getWorldPosition(e); //点击的世界坐标
   let scene = GlobalViewer.scene;
   let ellipsoid = scene.globe.ellipsoid;
-  let centerX = toRaw(item).position._rawValue.x;
-  let centerY = toRaw(item).position._rawValue.y;
-  let centerZ = toRaw(item).position._rawValue.z;
+  let centerX = toRaw(nowItem.value).position._rawValue.x;
+  let centerY = toRaw(nowItem.value).position._rawValue.y;
+  let centerZ = toRaw(nowItem.value).position._rawValue.z;
+  let vec3 = SSmap.Vector3.create(centerX, centerY, centerZ);
+  let worldPosition = ellipsoid.eastNorthUpToFixedFrame(point.toCartesian3()); //世界坐标转局部矩阵，指定位置建立局部坐标
+  let worldToLocal = worldPosition.inverted();
+  let parentEntity = new SSmap.Entity();
   checkEdit.value = nowBuild.value;
   floorList.length = 0;
   pointList.length = 0;
   // floorGeomList.length = 0;
-  // let length = floorGeomList.length;
-  // for (var i = length - 1; i > -1; i--) {
+  let geometry = nowItem.value.geo;
+  let pointArray = nowItem.value.edit;
+  let length = geometry.length;
+  let matrix4;
+  for (var i = length - 1; i > -1; i--) {
+    let point;
+    point = SSmap.Matrix4.multiplyByVector3(
+      worldToLocal,
+      toRaw(geometry[i]).transform.position
+    );
+    let rotation = SSmap.Quaternion.fromEulerAngles(0, 0, 0).toRotationMatrix();
+    let modelMatrix = SSmap.Matrix4.fromRotationTranslation(
+      rotation,
+      SSmap.Vector3.create(0, 0, 0)
+    );
+    matrix4 = SSmap.Matrix4.multiply(worldPosition, modelMatrix);
+
+    // toRaw(floorGeomList[i]).delete();
+    // floorGeomList.splice(i, 1);
+    // delete toRaw(floorGeomList[i]);
+    // parentEntity.addComponent(toRaw(floorGeomList[i]));
+    toRaw(geometry[i]).transform.matrix = matrix4;
+  }
+
+  pointArray.forEach((item) => {
+    toRaw(item).pointArr.forEach((items) => {
+      let point;
+      point = SSmap.Matrix4.multiplyByVector3(worldToLocal, toRaw(items));
+      let selfPosition = SSmap.Matrix4.multiplyByVector3(matrix4, toRaw(point));
+      toRaw(items).x = selfPosition.x;
+      toRaw(items).y = selfPosition.y;
+      toRaw(items).z = selfPosition.z;
+    });
+    // debugger;
+  });
+
+  if (moveBuild.value) {
+    // redrawExtru();
+    ElMessage.info("移动建筑成功");
+    document.getElementById("qtcanvas").removeEventListener("click", moveExtru);
+    document.getElementById("qtcanvas").style.cursor = "default";
+  }
+  // 至此已经可以移动;
+  return;
+  debugger;
+
+  // let length2 = floorGeomList.length;
+  // for (var i = length2 - 1; i > -1; i--) {
   //   toRaw(floorGeomList[i]).delete();
   //   floorGeomList.splice(i, 1);
   //   delete toRaw(floorGeomList[i]);
   // }
   cloneFloorList.length = 0;
   cloneGeoList.length = 0;
-  console.log("editCurrentGeo", item, nowBuild.value);
-  let pointArr = item.allPointList[nowBuild.value];
-  let geoList = item.geo;
-  toRaw(item.edit).forEach((i) => {
+  console.log("editCurrentGeo", nowItem.value, nowBuild.value);
+  let pointArr = nowItem.value.allPointList[nowBuild.value];
+  let geoList = nowItem.value.geo;
+  toRaw(nowItem.value.edit).forEach((i) => {
     floorList.push(i);
     cloneFloorList.push(i);
   });
@@ -433,7 +512,7 @@ const moveExtru = (e, item, index) => {
   //   cloneGeoList.push(i);
   // });
   // pointList.length = 0;
-  // item.pointList.forEach((i) => {
+  // nowItem.value.pointList.forEach((i) => {
   //   pointList.push(i);
   // });
   let newVertices = recomputeVertices(
@@ -450,11 +529,11 @@ const moveExtru = (e, item, index) => {
   });
   let center = calculatePolygonCenter(toRaw(pointList));
   // centerPoint.value = center;
-  toRaw(item).position._rawValue.x = center.x;
-  toRaw(item).position._rawValue.y = center.y;
-  toRaw(item).position._rawValue.z = center.z;
+  toRaw(nowItem.value).position._rawValue.x = center.x;
+  toRaw(nowItem.value).position._rawValue.y = center.y;
+  toRaw(nowItem.value).position._rawValue.z = center.z;
   if (moveBuild.value) {
-    redrawExtru(index);
+    // redrawExtru();
     ElMessage.info("移动建筑成功");
     document.getElementById("qtcanvas").removeEventListener("click", moveExtru);
     document.getElementById("qtcanvas").style.cursor = "default";
