@@ -265,9 +265,8 @@ const closeBuilid = () => {
   //     pointList: [...pointList],
   //   });
   // }
-  editBUtton.value = true;
   addList();
-  showInfo.value = false;
+  // showInfo.value = false;
 };
 
 const deleteBuild = () => {
@@ -467,17 +466,17 @@ const moveExtru = (e) => {
     toRaw(geometry[i]).transform.matrix = matrix4;
   }
 
-  pointArray.forEach((item) => {
-    toRaw(item).pointArr.forEach((items) => {
-      let point;
-      point = SSmap.Matrix4.multiplyByVector3(worldToLocal, toRaw(items));
-      let selfPosition = SSmap.Matrix4.multiplyByVector3(matrix4, toRaw(point));
-      toRaw(items).x = selfPosition.x;
-      toRaw(items).y = selfPosition.y;
-      toRaw(items).z = selfPosition.z;
-    });
-    // debugger;
-  });
+  // pointArray.forEach((item) => {
+  //   toRaw(item).pointArr.forEach((items) => {
+  //     let point;
+  //     point = SSmap.Matrix4.multiplyByVector3(worldToLocal, toRaw(items));
+  //     let selfPosition = SSmap.Matrix4.multiplyByVector3(matrix4, toRaw(point));
+  //     toRaw(items).x = selfPosition.x;
+  //     toRaw(items).y = selfPosition.y;
+  //     toRaw(items).z = selfPosition.z;
+  //   });
+  //   debugger;
+  // });
 
   if (moveBuild.value) {
     // redrawExtru();

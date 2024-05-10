@@ -5,7 +5,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, toRaw, onUnmounted } from "vue";
+import { ref, reactive, toRaw, onUnmounted, defineExpose } from "vue";
 import { useUsersStore } from "../store";
 import {
   getWorldPosition,
@@ -57,6 +57,7 @@ const endarea = () => {
   document.getElementById("qtcanvas").addEventListener("click", sureClick);
   ElMessage.info("左键获取,右键结束");
 };
+
 const clearMeasure = () => {
   if (threeList.length > 0) {
     pointList.splice(0, pointList.length);
@@ -323,8 +324,10 @@ const sureVlo = (event) => {
 onUnmounted(() => {
   clearMeasure();
 });
+
+defineExpose({
+  clearMeasure,
+});
 </script>
 
-<style lang="scss" scoped>
-
-</style>
+<style lang="scss" scoped></style>

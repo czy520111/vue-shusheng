@@ -46,17 +46,17 @@
       <div class="tool-box">
         <p>测量</p>
         <!-- <div> -->
-        <Measurement />
+        <Measurement @click="changeComponent(1)" ref="MeasurementVal" />
 
         <!-- </div> -->
         <!-- <div> -->
-        <Coordinate />
+        <Coordinate @click="changeComponent(2)" ref="CoordinateVal" />
 
         <!-- </div> -->
 
-        <Area />
-        <Volume />
-        <Create />
+        <Area @click="changeComponent(3)" ref="AreaVal" />
+        <Volume @click="changeComponent(4)" ref="VolumeVal" />
+        <Create @click="changeComponent(5)" />
       </div>
 
       <!-- <Point></Point> -->
@@ -79,6 +79,11 @@ import { ElRadioGroup, ElRadio, ElRadioButton } from "element-plus";
 import * as Native from "./native/main.js";
 import qtLoader from "../assets/loader.js";
 
+const CoordinateVal = ref();
+const MeasurementVal = ref();
+const AreaVal = ref();
+const VolumeVal = ref();
+
 const meausreVal = ref(false);
 const coorVal = ref(false);
 // export default {
@@ -89,14 +94,21 @@ const selectedComponent = ref("");
 const componentKey = ref(0);
 
 const changeComponent = (val) => {
-  console.log("changeComponent", val);
-  meausreVal.value = false;
-  coorVal.value = false;
-  if (val === "meausreVal") {
-    meausreVal.value = true;
-  } else if (val === "coorVal") {
-    coorVal.value = true;
-  }
+  debugger;
+  console.log("CoordinateVal", CoordinateVal.value);
+  console.log("CoordinateVal", CoordinateVal.value.clearMeasure);
+  CoordinateVal.value.clearMeasure();
+  MeasurementVal.value.clearMeasure();
+  AreaVal.value.clearMeasure();
+  VolumeVal.value.clearMeasure();
+  // console.log("changeComponent", val);
+  // meausreVal.value = false;
+  // coorVal.value = false;
+  // if (val === "meausreVal") {
+  //   meausreVal.value = true;
+  // } else if (val === "coorVal") {
+  //   coorVal.value = true;
+  // }
 };
 
 const toggleComponent = () => {

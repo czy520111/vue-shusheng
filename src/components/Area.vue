@@ -5,7 +5,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, toRaw, onUnmounted } from "vue";
+import { ref, reactive, toRaw, onUnmounted, defineExpose } from "vue";
 import { useUsersStore } from "../store";
 import {
   getWorldPosition,
@@ -50,6 +50,7 @@ const endarea = () => {
     .removeEventListener("mousemove", mousemoveEvent);
   ElMessage.info("左键获取,右键结束");
 };
+
 const clearMeasure = () => {
   if (threeList.length > 0) {
     pointList.splice(0, pointList.length);
@@ -242,6 +243,10 @@ const ContextMenuEvent = () => {
 
 onUnmounted(() => {
   clearMeasure();
+});
+
+defineExpose({
+  clearMeasure,
 });
 </script>
 

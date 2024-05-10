@@ -10,7 +10,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, toRaw, onUnmounted } from "vue";
+import { ref, reactive, toRaw, onUnmounted, defineExpose } from "vue";
 import { useUsersStore } from "../store";
 import { getWorldPosition } from "../editor/math";
 import { ElMessage } from "element-plus";
@@ -37,20 +37,22 @@ const setPoint = () => {
 };
 
 const clearMeasure = () => {
-  if (pointList.length > 0) {
-    let length = pointList.length;
-    for (var i = length - 1; i > -1; i--) {
-      toRaw(pointList[i]).delete();
-      pointList.splice(i, 1);
-      delete toRaw(pointList[i]);
-    }
-    let length2 = bbList.length;
-    for (var i = length2 - 1; i > -1; i--) {
-      toRaw(bbList[i]).delete();
-      bbList.splice(i, 1);
-      delete toRaw(bbList[i]);
-    }
+  let elem = document.querySelector(".text-info");
+  elem.style.display = "none";
+  // if (pointList.length > 0) {
+  let length = pointList.length;
+  for (var i = length - 1; i > -1; i--) {
+    toRaw(pointList[i]).delete();
+    pointList.splice(i, 1);
+    delete toRaw(pointList[i]);
   }
+  let length2 = bbList.length;
+  for (var i = length2 - 1; i > -1; i--) {
+    toRaw(bbList[i]).delete();
+    bbList.splice(i, 1);
+    delete toRaw(bbList[i]);
+  }
+  // }
 };
 
 const mouseClickEvent = (event) => {
@@ -93,7 +95,7 @@ const mouseClickEvent = (event) => {
       window.GlobalViewer.scene.mainCamera.worldToScreenPoint(tohic);
     elem.style.bottom = 0.1 - xyposition.y + elem.clientHeight / 2 + "px";
     elem.style.left = 0.1 + xyposition.x - elem.clientWidth * 1.8 + "px";
-    console.log("456456");
+    // console.log("456456");
   });
   scene.rootEntity.addComponent(frameAction);
   //   drawShpere(la);
@@ -144,6 +146,10 @@ const ContextMenuEvent = (event) => {
 
 onUnmounted(() => {
   clearMeasure();
+});
+
+defineExpose({
+  clearMeasure,
 });
 </script>
 

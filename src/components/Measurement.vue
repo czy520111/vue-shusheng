@@ -17,7 +17,7 @@ import {
   isPointOnLine,
 } from "../editor/math";
 import { addBillboard } from "../editor/draw";
-import { ref, reactive, toRaw, onUnmounted } from "vue";
+import { ref, reactive, toRaw, onUnmounted, defineExpose } from "vue";
 import { fa, tr } from "element-plus/es/locales.mjs";
 const emit = defineEmits(["clearMeasure"]);
 const store = useUsersStore();
@@ -61,6 +61,7 @@ const setLine = () => {
   //   check.value = false;
   // }
 };
+
 const clearMeasure = () => {
   if (bbList.length > 0) {
     let length = window.entityAllList.length;
@@ -483,6 +484,10 @@ const MouseMoveEvent = (event) => {
 
 onUnmounted(() => {
   clearMeasure();
+});
+
+defineExpose({
+  clearMeasure,
 });
 </script>
 
