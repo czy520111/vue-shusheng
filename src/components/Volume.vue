@@ -5,7 +5,14 @@
 </template>
 
 <script setup>
-import { ref, reactive, toRaw, onUnmounted, defineExpose } from "vue";
+import {
+  ref,
+  reactive,
+  toRaw,
+  onUnmounted,
+  defineExpose,
+  getCurrentInstance,
+} from "vue";
 import { useUsersStore } from "../store";
 import {
   getWorldPosition,
@@ -31,6 +38,7 @@ const setExtru = ref(0);
 const referHeight = ref(0);
 const Area = ref(0);
 const Height = ref(0);
+let { proxy } = getCurrentInstance();
 const setArea = () => {
   clearMeasure();
   document
@@ -59,6 +67,8 @@ const endarea = () => {
 };
 
 const clearMeasure = () => {
+  Native.Volume.clearMeasure();
+  return;
   if (threeList.length > 0) {
     pointList.splice(0, pointList.length);
     let length = threeList.length;
@@ -88,7 +98,20 @@ const clearMeasure = () => {
   }
 };
 const mouseClickEvent = (event) => {
-  let point = getWorldPosition(event);
+  // let point = getWorldPosition(event);
+  Native.Point.getWorldPosition({ x: event.x, y: event.y }, function (point) {
+    let url = proxy.$baseUrl;
+    Native.Volume.mouseClickEvent(point, url, function (length) {
+      console.log(length, "66666666666");
+      if (length > 0) {
+        document
+          .getElementById("qtcanvas")
+          .addEventListener("mousemove", mousemoveEvent);
+      }
+    });
+  });
+
+  return;
   let Geoobj = {
     position: point, //坐标
     name: "zuobiao",
@@ -126,7 +149,11 @@ const mouseClickEvent = (event) => {
   //   ContextMenuEvent();
 };
 const mousemoveEvent = (event) => {
-  let point = getWorldPosition(event);
+  // let point = getWorldPosition(event);
+  Native.Point.getWorldPosition({ x: event.x, y: event.y }, function (point) {
+    Native.Volume.mousemoveEvent(point);
+  });
+  return;
   if (moveList.length > 0) {
     toRaw(moveList)[moveList.length - 1].delete(); //删除鼠标移动中前一帧创建的线实体
     moveList.splice(0, moveList.length);
@@ -181,6 +208,11 @@ const mousemoveEvent = (event) => {
 };
 const clearState = () => {};
 const ContextMenuEvent = (e) => {
+  Native.Point.getWorldPosition({ x: e.x, y: e.y }, function (point) {
+    Native.Volume.ContextMenuEvent({ x: e.x, y: e.y });
+    endarea();
+  });
+  return;
   if (pointList.length < 3) return;
   console.log(e, "e");
   referHeight.value = e.y;
@@ -199,35 +231,15 @@ const ContextMenuEvent = (e) => {
   threeList.push(tLine);
   let area = calSpaceArea(toRaw(pointList));
   Area.value = area;
-  //   let center = calculatePolygonCenter(toRaw(pointList));
-  //   let labelObj = {
-  //     position: center,
-  //     text: area.toFixed(2).toString() + "㎡",
-  //     fontSize: 20,
-  //     fontColor: SSmap.Color.fromRgb(255, 255, 26, 255),
-  //     translucencyByDistance: SSmap.Vector4.create(30000, 1.0, 1.0e5, 0.7),
-  //     name: "label",
-  //     // id: "measure",
-  //   };
-  //   let label3d = drawLabel(labelObj);
-  //   threeList.push(label3d);
   let pointArr = [];
   pointList.forEach((item) => {
-    // point.toCartesian3().toCartographic()
     pointArr.push(toRaw(item));
   });
   let exArr = new Array();
   pointList.forEach((item) => {
     exArr.push(toRaw(item).toCartesian3().toCartographic().toCartesian3());
   });
-  //   let polygongeometryObj = {
-  //     height: 10,
-  //     alpha: 0.8,
-  //     pointArr,
-  //     color: SSmap.Color.fromRgb(83, 255, 26, 255),
-  //     name: "polygongeometry",
-  //   };
-  //   let altitude = SSmap.AltitudeMethod.OnTerrain;
+
   let polygongeometryObj = {
     height: 10,
     alpha: 0.8,
@@ -238,7 +250,6 @@ const ContextMenuEvent = (e) => {
   };
 
   let polyGeometry = drawPolygonGeometry(polygongeometryObj);
-  //   let polyGeometry = drawPolygonGeometry(polygongeometryObj);
   threeList.push(polyGeometry);
   let length1 = moveList.length;
   for (var i = length1 - 1; i > -1; i--) {
@@ -257,6 +268,10 @@ const ContextMenuEvent = (e) => {
 };
 const sureClick = () => {
   document.getElementById("qtcanvas").removeEventListener("mousemove", sureVlo);
+  Native.Volume.sureClick();
+  document.getElementById("qtcanvas").removeEventListener("click", sureClick);
+
+  return;
   if (polyList.length > 0) {
     toRaw(polyList)[polyList.length - 1].delete(); //删除鼠标移动中前一帧创建的面实体
     polyList.splice(0, polyList.length);
@@ -292,33 +307,35 @@ const sureClick = () => {
   };
   let polyGeometry = drawPolygonGeometry(polygongeometryObj);
   polyList.push(polyGeometry);
-
-  document.getElementById("qtcanvas").removeEventListener("click", sureClick);
 };
 const sureVlo = (event) => {
-  let point = getWorldPosition(event).toCartesian3().toCartographic(); //转换为经纬度
-  Height.value = Number(point.height.toFixed(2));
-  let bHeight = referHeight.value - event.y;
-  console.log(point.height, "666666", event.x, event.y);
-  if (polyList.length > 0) {
-    toRaw(polyList)[polyList.length - 1].delete(); //删除鼠标移动中前一帧创建的面实体
-    polyList.splice(0, polyList.length);
-  }
-  let exArr = new Array();
-  pointList.forEach((item) => {
-    exArr.push(toRaw(item).toCartesian3().toCartographic().toCartesian3());
+  Native.Point.getWorldPosition({ x: event.x, y: event.y }, function (point) {
+    Native.Volume.sureVlo(point, { x: event.x, y: event.y });
   });
 
-  let polygongeometryObj = {
-    height: bHeight * 10,
-    alpha: 0.8,
-    pointArr: exArr,
-    color: SSmap.Color.fromRgb(83, 255, 26, 255),
-    name: "polygongeometry",
-    // id: "measure",
-  };
-  let polyGeometry = drawPolygonGeometry(polygongeometryObj);
-  polyList.push(polyGeometry);
+  // let point = getWorldPosition(event).toCartesian3().toCartographic(); //转换为经纬度
+  // Height.value = Number(point.height.toFixed(2));
+  // let bHeight = referHeight.value - event.y;
+  // console.log(point.height, "666666", event.x, event.y);
+  // if (polyList.length > 0) {
+  //   toRaw(polyList)[polyList.length - 1].delete(); //删除鼠标移动中前一帧创建的面实体
+  //   polyList.splice(0, polyList.length);
+  // }
+  // let exArr = new Array();
+  // pointList.forEach((item) => {
+  //   exArr.push(toRaw(item).toCartesian3().toCartographic().toCartesian3());
+  // });
+
+  // let polygongeometryObj = {
+  //   height: bHeight * 10,
+  //   alpha: 0.8,
+  //   pointArr: exArr,
+  //   color: SSmap.Color.fromRgb(83, 255, 26, 255),
+  //   name: "polygongeometry",
+  //   // id: "measure",
+  // };
+  // let polyGeometry = drawPolygonGeometry(polygongeometryObj);
+  // polyList.push(polyGeometry);
 };
 
 onUnmounted(() => {

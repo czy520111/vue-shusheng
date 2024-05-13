@@ -5,7 +5,14 @@
 </template>
 
 <script setup>
-import { ref, reactive, toRaw, onUnmounted, defineExpose } from "vue";
+import {
+  ref,
+  reactive,
+  toRaw,
+  onUnmounted,
+  defineExpose,
+  getCurrentInstance,
+} from "vue";
 import { useUsersStore } from "../store";
 import {
   getWorldPosition,
@@ -26,6 +33,7 @@ const threeList = reactive([]);
 const moveList = reactive([]);
 const polyList = reactive([]);
 const bbList = reactive([]);
+let { proxy } = getCurrentInstance();
 const setArea = () => {
   clearMeasure();
   document
@@ -52,6 +60,8 @@ const endarea = () => {
 };
 
 const clearMeasure = () => {
+  Native.Area.clearMeasure();
+  return;
   if (threeList.length > 0) {
     pointList.splice(0, pointList.length);
     let length = threeList.length;
@@ -80,8 +90,17 @@ const clearMeasure = () => {
     }
   }
 };
+const NattiClick = () => {};
 const mouseClickEvent = (event) => {
-  let point = getWorldPosition(event);
+  // let point = getWorldPosition(event);
+  let url = proxy.$baseUrl;
+  Native.Point.getWorldPosition({ x: event.x, y: event.y }, function (point) {
+    Native.Area.mouseClickEvent(point, url);
+    document
+      .getElementById("qtcanvas")
+      .addEventListener("mousemove", mousemoveEvent);
+  });
+  return;
   pointList.push(point);
   let la = point.toCartographic().toDegrees();
   let Geoobj = {
@@ -119,7 +138,11 @@ const mouseClickEvent = (event) => {
   //   ContextMenuEvent();
 };
 const mousemoveEvent = (event) => {
-  let point = getWorldPosition(event);
+  // let point = getWorldPosition(event);
+  Native.Point.getWorldPosition({ x: event.x, y: event.y }, function (point) {
+    Native.Area.mousemoveEvent(point);
+  });
+  return;
   if (moveList.length > 0) {
     toRaw(moveList)[moveList.length - 1].delete(); //删除鼠标移动中前一帧创建的线实体
     moveList.splice(0, moveList.length);
@@ -170,9 +193,12 @@ const mousemoveEvent = (event) => {
   //   console.log("mousemoveEvent", event.x);
 };
 const ContextMenuEvent = () => {
+  console.log("ContextMenuEvent");
+  Native.Area.ContextMenuEvent();
+  endarea();
+  return;
   if (pointList.length < 3) return;
 
-  console.log("ContextMenuEvent");
   pointList.push(pointList[0]);
   let obj = {
     width: 3,

@@ -17,7 +17,14 @@ import {
   isPointOnLine,
 } from "../editor/math";
 import { addBillboard } from "../editor/draw";
-import { ref, reactive, toRaw, onUnmounted, defineExpose } from "vue";
+import {
+  ref,
+  reactive,
+  toRaw,
+  onUnmounted,
+  defineExpose,
+  getCurrentInstance,
+} from "vue";
 import { fa, tr } from "element-plus/es/locales.mjs";
 const emit = defineEmits(["clearMeasure"]);
 const store = useUsersStore();
@@ -31,6 +38,7 @@ const lineList = reactive([]);
 const polyList = reactive([]);
 const labelList = reactive([]);
 const dbPoint = ref(false);
+let { proxy } = getCurrentInstance();
 const setLine = () => {
   clearMeasure();
 
@@ -93,7 +101,13 @@ const clearMeasure = () => {
 
 const mouseClickEvent = (event) => {
   // // console.log(e);
-  let point = getWorldPosition(event);
+  // let point = getWorldPosition(event);
+  let url = proxy.$baseUrl;
+  Native.Point.getWorldPosition({ x: event.x, y: event.y }, function (point) {
+    Native.Measurement.mouseClickEvent(point, url);
+  });
+
+  return;
   //鼠标左键点击
   if (window.pointLineList.length == 0) {
     window.linedistance = 0; //清空上次测量结果
@@ -164,6 +178,13 @@ const mouseClickEvent = (event) => {
 };
 
 const ContextMenuEvent = () => {
+  Native.Measurement.ContextMenuEvent();
+  document.getElementById("qtcanvas").style.cursor = "default";
+  endMeasure();
+  updataLine();
+  document.getElementById("qtcanvas").addEventListener("mousedown", mouseDown);
+  document.getElementById("qtcanvas").addEventListener("mouseup", mouseUp);
+  return;
   if (window.nodeMoveList.length > 0) {
     window.nodeMoveList[window.nodeMoveList.length - 1].delete(); //删除鼠标移动中前一帧创建的线实体
   }
@@ -173,14 +194,14 @@ const ContextMenuEvent = () => {
   }
   window.laberMoveList = [];
   window.pointLineList = [];
-  document.getElementById("qtcanvas").style.cursor = "default";
-  endMeasure();
-  updataLine();
-  document.getElementById("qtcanvas").addEventListener("mousedown", mouseDown);
-  document.getElementById("qtcanvas").addEventListener("mouseup", mouseUp);
 };
 
 const dblClickEvent = (event) => {
+  console.log(event, "666666666666666");
+  return;
+  let url = proxy.$baseUrl;
+  Native.Measurement.dblClickEvent({ x: event.x, y: event.y }, url);
+  return;
   let feature = window.GlobalViewer.scene.getFeatureByMouse();
   let point = getWorldPosition(event);
   if (feature) {
@@ -224,11 +245,9 @@ const dblClickEvent = (event) => {
 let mouseMoveListener = null;
 const mouseDown = (e) => {
   // console.log("mouseDown");
-  let point = getWorldPosition(e);
-  let feature = window.GlobalViewer.scene.getFeatureByMouse();
-  if (feature?.parent.objectName == "bill") {
-    checkPoint.value = true;
-    let position = feature.parent.position;
+  // let point = getWorldPosition(e);
+  // Native.Point.getWorldPosition({ x: e.x, y: e.y }, function (point) {
+  Native.Measurement.mouseDown(function (feature) {
     if (mouseMoveListener) {
       document
         .getElementById("qtcanvas")
@@ -238,18 +257,41 @@ const mouseDown = (e) => {
     document
       .getElementById("qtcanvas")
       .addEventListener("mousemove", mouseMoveListener);
+  });
+
+  // });
+  return;
+  let feature = window.GlobalViewer.scene.getFeatureByMouse();
+  if (feature?.parent.objectName == "bill") {
+    checkPoint.value = true;
+    let position = feature.parent.position;
+
     // console.log("获取点图层属性", feature);
   }
 };
 
 const mouseUp = (e) => {
   // console.log("mouseUp");
-  checkPoint.value = false;
+
+  Native.Measurement.mouseUp(function (mouseMoveListener) {
+    if (mouseMoveListener) {
+      document
+        .getElementById("qtcanvas")
+        .removeEventListener("mousemove", mouseMoveListener);
+      // mouseMoveListener = null; // 置空变量
+    }
+    document
+      .getElementById("qtcanvas")
+      .removeEventListener("mousedown", mouseDown);
+    document.getElementById("qtcanvas").addEventListener("mousedown", setPoint);
+  });
+  return;
+  // checkPoint.value = false;
   document.getElementById("qtcanvas").style.cursor = "default";
-  let cameraCtrl = GlobalViewer.scene.mainCamera.cameraController();
-  cameraCtrl.enableInputs = true;
+  // let cameraCtrl = GlobalViewer.scene.mainCamera.cameraController();
+  // cameraCtrl.enableInputs = true;
   // console.log(lineList, "+++", bbList);
-  updataLine();
+  // updataLine();
   if (mouseMoveListener) {
     document
       .getElementById("qtcanvas")
@@ -263,6 +305,10 @@ const mouseUp = (e) => {
 };
 
 const movePoint = (e, feature) => {
+  Native.Measurement.movePoint({ x: e.x, y: e.y }, function (feature) {
+    document.getElementById("qtcanvas").style.cursor = "pointer";
+  });
+  return;
   if (checkPoint.value == false) return;
   document.getElementById("qtcanvas").style.cursor = "pointer";
   let cameraCtrl = GlobalViewer.scene.mainCamera.cameraController();
@@ -273,6 +319,8 @@ const movePoint = (e, feature) => {
 };
 
 const setPoint = (e) => {
+  Native.Measurement.setPoint();
+  return;
   let feature = window.GlobalViewer.scene.getFeatureByMouse();
   if (feature?.parent.objectName == "bill") {
     mouseDown(e);
@@ -280,6 +328,8 @@ const setPoint = (e) => {
 };
 
 const updataLine = () => {
+  Native.Measurement.updataLine();
+  return;
   let pointList = [];
   let length3 = labelList.length;
   for (var i = length3 - 1; i > -1; i--) {
@@ -453,8 +503,11 @@ const addLabel3D = (opt) => {
 
 const MouseMoveEvent = (event) => {
   // // console.log(e);
-  let point = getWorldPosition(event);
-
+  // let point = getWorldPosition(event);
+  Native.Point.getWorldPosition({ x: event.x, y: event.y }, function (point) {
+    Native.Measurement.MouseMoveEvent(point);
+  });
+  return;
   if (window.nodeMoveList.length > 0) {
     window.nodeMoveList[window.nodeMoveList.length - 1].delete(); //删除鼠标移动中前一帧创建的线实体
   }

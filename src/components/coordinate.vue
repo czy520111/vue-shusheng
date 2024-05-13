@@ -10,7 +10,14 @@
 </template>
 
 <script setup>
-import { ref, reactive, toRaw, onUnmounted, defineExpose } from "vue";
+import {
+  ref,
+  reactive,
+  toRaw,
+  onUnmounted,
+  defineExpose,
+  getCurrentInstance,
+} from "vue";
 import { useUsersStore } from "../store";
 import { getWorldPosition } from "../editor/math";
 import { ElMessage } from "element-plus";
@@ -21,6 +28,7 @@ const bbList = reactive([]);
 const longitude = ref(0);
 const latitude = ref(0);
 const height = ref(0);
+let { proxy } = getCurrentInstance();
 const setPoint = () => {
   clearMeasure();
   document
@@ -37,8 +45,12 @@ const setPoint = () => {
 };
 
 const clearMeasure = () => {
+  console.log("cccccc");
   let elem = document.querySelector(".text-info");
   elem.style.display = "none";
+  // let elem = document.querySelector(".text-info");
+  // elem.style.display = "none";
+  Native.Point.clearMear();
   // if (pointList.length > 0) {
   let length = pointList.length;
   for (var i = length - 1; i > -1; i--) {
@@ -54,57 +66,36 @@ const clearMeasure = () => {
   }
   // }
 };
-
-const mouseClickEvent = (event) => {
-  let point = getWorldPosition(event);
-  let la = point.toCartographic().toDegrees();
-  let Geoobj = {
-    position: point, //坐标
-    name: "zuobiao",
-    url: "src/images/circle.png", //路径
-    scale: 0.5, //比例
-    altitude: 10, //海拔，非必填
-    // imageWidth:0,
-    // imageHeight:0,
-    altitudeMethod: SSmap.AltitudeMethod.Absolute, //Absolute 绝对海拔  OnTerrain 贴地 RelativeToTerrain 贴地并相对海拔
-  };
-  var Billboard = addBillboard(Geoobj);
-  bbList.push(Billboard);
-  console.log("la", la);
-  latitude.value = la.latitude.toFixed(6);
-  longitude.value = la.longitude.toFixed(6);
-  height.value = la.height.toFixed(2);
-  let obj = {
-    point,
-    text: `
-    经度:${la.longitude.toFixed(6)} 
-    纬度:${la.latitude.toFixed(6)} 
-    高度:${la.height.toFixed(2)}`,
-  };
-  // drawLabel(obj);
-
+const downPoint = (poi, url) => {
   let elem = document.querySelector(".text-info");
   elem.style.display = "block";
-  let world = getWorldPosition(event);
-  let tohic = world.toCartesian3().toVector3();
-  let frameAction = new SSmap.FrameAction();
-  frameAction.onTriggered(() => {
-    //每一帧改变div的位置
-    // debugger;
-    var xyposition =
-      window.GlobalViewer.scene.mainCamera.worldToScreenPoint(tohic);
-    elem.style.bottom = 0.1 - xyposition.y + elem.clientHeight / 2 + "px";
-    elem.style.left = 0.1 + xyposition.x - elem.clientWidth * 1.8 + "px";
-    // console.log("456456");
+  Native.Point.checkPoint(poi, url, function (la) {
+    // console.log(la, "la6666");
+    latitude.value = la.latitude.toFixed(6);
+    longitude.value = la.longitude.toFixed(6);
+    height.value = la.height.toFixed(2);
+
+    elem.style.bottom = 0.1 - la.xyposition.y + elem.clientHeight / 2 + "px";
+    elem.style.left = 0.1 + la.xyposition.x - elem.clientWidth * 1.8 + "px";
   });
-  scene.rootEntity.addComponent(frameAction);
-  //   drawShpere(la);
-  ContextMenuEvent();
-  getText(event);
+};
+
+const mouseClickEvent = (event) => {
+  console.log(Native, "Native");
+  Native.Point.getWorldPosition({ x: event.x, y: event.y }, function (poi) {
+    console.log("World position:", poi);
+    // let point = { x: poi.x, y: poi.y, z: poi.z };
+    let url = proxy.$baseUrl;
+    // Native.Point.checkPoint(poi, url);
+    downPoint(poi, url);
+    ContextMenuEvent();
+    getText(event);
+    // SSmap = window.SSmap;
+  });
 };
 const getText = (event) => {
   // document.getElementById("qtcanvas").addEventListener("click", getTextEvent);
-  document.getElementById("qtcanvas").addEventListener("mousemove", mouseMove);
+  // document.getElementById("qtcanvas").addEventListener("mousemove", mouseMove);
   //   let point = getWorldPosition(event);
   //   console.log("point", point);
 };

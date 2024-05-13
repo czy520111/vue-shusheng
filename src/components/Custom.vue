@@ -266,7 +266,7 @@
 
 <script setup>
 import { ref, reactive, onMounted, toRaw } from "vue";
-import * as Native from "../native/main.js";
+// import * as Native from "../native/main.js";
 import { Search, ArrowLeft, ArrowRight } from "@element-plus/icons-vue";
 import { ExtrudeGeometry } from "../editor/ExtrudeGeometry.js";
 // import Utils from "../editor/utils.js";
@@ -2182,8 +2182,8 @@ onMounted(() => {
   .next-button {
     width: 300px;
     position: absolute;
-    top: 1200px;
-    left: 1800px;
+    bottom: -82vh;
+    right: -70vw;
     .el-button {
       height: 50px;
     }

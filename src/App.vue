@@ -1,11 +1,7 @@
 <template>
   <div>
     <!-- 3d视图容器 -->
-    <div
-      class="viewer-container"
-      ref="container"
-      @contextmenu.prevent="Web.removeContextmenu()"
-    ></div>
+    <div class="viewer-container" ref="container"></div>
 
     <!-- ui面板 -->
     <div class="ui-wrapper">
@@ -65,7 +61,7 @@
 </template>
 
 <script setup>
-import SSWebChannel from "../SSWebChannel.js";
+import SSWebChannel from "../public/SSWebChannel.js";
 import emitter from "./libs/emitter.js";
 import Measurement from "./components/Measurement.vue";
 import Coordinate from "./components/coordinate.vue";
@@ -76,8 +72,9 @@ import Custom from "./components/Custom.vue";
 import { ref, onMounted } from "vue";
 import Web from "./web/index.js";
 import { ElRadioGroup, ElRadio, ElRadioButton } from "element-plus";
-import * as Native from "./native/main.js";
+import * as Native from "../public/native/main.js";
 import qtLoader from "../assets/loader.js";
+// import CanvasLoader from "./views/hybrid-loader.vue";
 
 const CoordinateVal = ref();
 const MeasurementVal = ref();
@@ -94,7 +91,6 @@ const selectedComponent = ref("");
 const componentKey = ref(0);
 
 const changeComponent = (val) => {
-  debugger;
   console.log("CoordinateVal", CoordinateVal.value);
   console.log("CoordinateVal", CoordinateVal.value.clearMeasure);
   CoordinateVal.value.clearMeasure();
@@ -118,7 +114,7 @@ const clearMeasure = (e) => {
   console.log("handleCustomEvent", e);
 };
 const addArcGisImagery = () => {
-  Native.addArcGisImagery();
+  Web.initArcGis();
 };
 
 const addTerrain = () => {
@@ -138,46 +134,93 @@ const removeTileset = () => {
 };
 
 onMounted(() => {
-  // let canvasEl = document.querySelector(".viewer-container");
+  //客户端
+  if (!window.Native) {
+    let canvasEl = document.createElement("div");
+    canvasEl.id = "qtcanvas";
+    canvasEl.style.cssText = `
+            width: 100vw;
+            height: 100vh;
+            touch-action: none;
+        `;
+    canvasEl.oncontextmenu = function (e) {
+      e.preventDefault();
+    };
 
-  // new SSWebChannel(canvasEl, (channel) => {
-  //   channel.importModule("src/native/main.js", "Native", () => {
-  //     window.GlobalViewer.canvasEl = canvasEl;
+    let app = document.querySelector(".viewer-container");
+    app.appendChild(canvasEl);
 
-  //     //webview环境全局变量
-  //     window.isWebview = true;
+    //初始化SSWebChannel.js脚本
+    window.ssWebChannel = new SSWebChannel(canvasEl, (channel) => {
+      //初始化native模块
+      channel.importModule("public/native/main.js", "Native", () => {
+        //初始化完成
+        window.GlobalViewer.canvasEl = canvasEl;
 
-  //     //初始化完成
-  //     // window.Web.initMap();
-  //     emitter.emit("initMap");
-  //   });
+        window.HtmldomList = [];
+        window.pointLineList = [];
+        window.linedistance = 0;
+        window.entityAllList = [];
+        window.nodeMoveList = [];
+        window.laberMoveList = [];
+        window.billboardCollection = null;
+        emitter.emit("initMap");
+      });
+    });
+  }
+
+  //网页端
+  // qtLoader({
+  //   el: container.value,
+  // }).then(([SSmap, GlobalViewer]) => {
+  //   // 设置Native全局变量
+  //   window.Native = Native;
+  //   window.nowLayer = null;
+  //   // 设置视图全局变量
+  //   window.GlobalViewer = GlobalViewer;
+  //   window.SSmap = SSmap;
+  //   window.scene = GlobalViewer.scene;
+  //   // 浏览器环境全局变量
+  //   window.isWeb = true;
+  //   window.HtmldomList = [];
+  //   window.pointLineList = [];
+  //   window.linedistance = 0;
+  //   window.entityAllList = [];
+  //   window.nodeMoveList = [];
+  //   window.laberMoveList = [];
+  //   window.billboardCollection = null;
+  //   // 初始化完成
+  //   Web.initMap();
+  // });
+});
+
+emitter.on("initMap", () => {
+  // state.appShow = true;
+  //sdk授权
+  Web.initMap();
+
+  // draw();
+});
+
+const draw = () => {
+  let position = {
+    longitude: 114.054494,
+    latitude: 22.540745,
+    height: 1300,
+  };
+  Native.cameraFlyTo(position);
+
+  // //加载影像
+  // Native.ArcGisMapLayer.add({
+  //   url: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+  //   id: uuid(),
   // });
 
-  qtLoader({
-    el: container.value,
-  }).then(([SSmap, GlobalViewer]) => {
-    // 设置Native全局变量
-    window.Native = Native;
-    window.nowLayer = null;
-    // 设置视图全局变量
-    window.GlobalViewer = GlobalViewer;
-    window.SSmap = SSmap;
-    window.scene = GlobalViewer.scene;
-
-    // 浏览器环境全局变量
-    window.isWeb = true;
-
-    window.HtmldomList = [];
-    window.pointLineList = [];
-    window.linedistance = 0;
-    window.entityAllList = [];
-    window.nodeMoveList = [];
-    window.laberMoveList = [];
-    window.billboardCollection = null;
-    // 初始化完成
-    Web.initMap();
-  });
-});
+  // //加载地形
+  // Native.Terrain.add({
+  //   url: "https://www.dataarche.com/static_resource/MultiScreenData/dem/sz",
+  // });
+};
 </script>
 
 <style scoped>
@@ -198,6 +241,7 @@ canvas {
   position: relative;
   width: 100vw;
   height: 100vh;
+  margin: -4px;
 }
 .ui-wrapper {
   position: absolute;
