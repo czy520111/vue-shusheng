@@ -15,10 +15,11 @@
         <p>{{ factoryNumber }}</p>
         <p>{{ modifiedStr }}</p>
         <p>M1</p>
-        <p>{{ landNumber }}</p>
+        <p>{{ landNumber }}平方米</p>
         <p>9.5</p>
         <p>120</p>
       </div>
+
       <el-button class="checkbutton" @click="showCont" type="primary"
         >选择编辑</el-button
       >
@@ -265,10 +266,11 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, toRaw } from "vue";
+import { ref, reactive, onMounted, toRaw, getCurrentInstance } from "vue";
 // import * as Native from "../native/main.js";
 import { Search, ArrowLeft, ArrowRight } from "@element-plus/icons-vue";
 import { ExtrudeGeometry } from "../editor/ExtrudeGeometry.js";
+import { useUsersStore } from "../store/index.js";
 // import Utils from "../editor/utils.js";
 // import * as Utils from "../editor/utils.js";
 import * as THREE from "three";
@@ -290,15 +292,18 @@ import {
   calculateSquareVertices,
   rotateRectangleVertices,
   getWorldPosition,
-} from "../editor/math.js";
+  calculatePolygonCenter,
+} from "../../public/native/editor/math.js";
 import { ElMessage } from "element-plus";
 import html2canvas from "html2canvas";
 // const ThreeBSP = require("jthreebsp")(THREE);
 // const ThreeBSP = _ThreeBSP(THREE);
+let { proxy } = getCurrentInstance();
 const projectLayer = ref(null);
+const tilesArray = reactive([]);
 const nowNode = ref(null);
 const showNumber = ref(false);
-const factoryNumber = ref("");
+const factoryNumber = ref(null);
 const landNumber = ref("");
 const modifiedStr = ref("");
 const showContent = ref(false);
@@ -322,6 +327,7 @@ const steps = ref(0);
 const rotatePoints = reactive([]);
 const nextText = ref("下一步");
 const showPic = ref(false);
+const nowCenter = ref(null);
 const HtmldomList = reactive([]);
 const videoInterval = ref(null);
 
@@ -357,9 +363,16 @@ const initTiles = () => {
         fetch(filePath)
           .then((response) => response.json())
           .then((data) => {
-            Native.Tileset.add({
-              url: filePath,
-            });
+            Native.Tileset.add(
+              {
+                url: filePath,
+              },
+              function (tiles) {
+                // tiles.enabled = false;
+                // console.log(tiles, "tiles666666");
+                tilesArray.push(tiles);
+              }
+            );
             // console.log("Loaded file:", filePath, data);
           })
           .catch((error) => {
@@ -371,20 +384,30 @@ const initTiles = () => {
       console.error("Error loading folder:", folderPath, error);
     });
   //投影
-  projectLayer.value = new SSmap.ProjectionLayer();
-  toRaw(projectLayer.value).sceneMode =
-    SSmap.TextureProjectionSceneMode.WholeScene;
-  let pdSource = new SSmap.ProjectionDataSource();
-  pdSource.setColor(SSmap.Color.fromRgb(0, 0, 255, 150));
-  pdSource.setSelectedColor(SSmap.Color.fromRgb(0, 255, 0, 128));
-  pdSource.setStrokeWidth(3);
-  pdSource.setStrokeColor(SSmap.Color.fromRgb(0, 0, 255, 150));
-  //   pdSource.setSelectedStrokeColor(SSmap.Color.fromRgb(0, 255, 0, 128));
-  pdSource.addField("Layer"); //需要拾取的属性
-  pdSource.addField("area"); //需要拾取的属性
-  pdSource.enabled = true;
-  pdSource.loadGeoJson(origin + "/data/geojson/model-design.json");
-  toRaw(projectLayer.value).addDataSource(pdSource);
+  let projectPath = origin + "/data/geojson/model-design.json";
+  fetch(projectPath)
+    .then((response) => response.json())
+    .then((json) => {
+      Native.Custom.addProjection(json, function (data) {
+        console.log(data, "dddddddddd");
+      });
+    });
+  let url = proxy.$baseUrl;
+  // Native.Custom.addProjectionLayer(url);
+  // projectLayer.value = new SSmap.ProjectionLayer();
+  // toRaw(projectLayer.value).sceneMode =
+  //   SSmap.TextureProjectionSceneMode.WholeScene;
+  // let pdSource = new SSmap.ProjectionDataSource();
+  // pdSource.setColor(SSmap.Color.fromRgb(0, 0, 255, 150));
+  // pdSource.setSelectedColor(SSmap.Color.fromRgb(0, 255, 0, 128));
+  // pdSource.setStrokeWidth(3);
+  // pdSource.setStrokeColor(SSmap.Color.fromRgb(0, 0, 255, 150));
+  // //   pdSource.setSelectedStrokeColor(SSmap.Color.fromRgb(0, 255, 0, 128));
+  // pdSource.addField("Layer"); //需要拾取的属性
+  // pdSource.addField("area"); //需要拾取的属性
+  // pdSource.enabled = true;
+  // pdSource.loadGeoJson(origin + "/data/geojson/model-design.json");
+  // toRaw(projectLayer.value).addDataSource(pdSource);
 
   //地块
   Native.Glbset.add({ url: origin + "/data/glb/BG.glb" });
@@ -402,6 +425,37 @@ const createEvent = () => {
     .addEventListener("click", mouseClickEvent);
 };
 const mouseClickEvent = (e) => {
+  console.log(tilesArray, "66666666666");
+  Native.Custom.mouseClickEvent(
+    { x: e.x, y: e.y, arr: toRaw(tilesArray) },
+    function (all) {
+      // console.log(feature, factory, "fffffffffffff");
+      let feature = all.feature;
+      // tileFeature.value = all.tileFeature;
+      // nowNode.value = all.nowNode;
+      if (feature) {
+        // console.log(feature, "ccccccccccc");
+        factoryNumber.value = all.factoryNumber;
+        landNumber.value = all.landNumber;
+        modifiedStr.value = all.modifiedStr;
+        // console.log(factoryNumber, factory, "ccccccccccc");
+        showInfo(e);
+        let elem = document.querySelector(".show-info");
+        elem.style.display = "flex";
+        Native.Point.getWorldPosition({ x: e.x, y: e.y }, function (point) {
+          let elem = document.querySelector(".show-info");
+          elem.style.display = "flex";
+          Native.Custom.createDomLabel(point, function (xyposition) {
+            elem.style.bottom = 0.1 - xyposition.y - elem.clientHeight + "px";
+            elem.style.left =
+              0.1 + xyposition.x - elem.clientWidth * 3.5 + "px";
+          });
+        });
+      }
+    }
+  );
+
+  return;
   let feature = toRaw(projectLayer.value).getFeatureByMouse();
 
   //   toRaw(projectLayer.value).setColor(SSmap.Color.fromRgb(0, 0, 255, 128));
@@ -458,20 +512,25 @@ const showCont = () => {
 const showDeitHandle = (value) => {
   checkType.value = value;
   showEditFloor.value = true;
-  let feature = toRaw(nowNode.value).feature();
-  feature.enabled = false;
-  feature.parent.enabled = false;
-  feature.parent.parent.enabled = false;
-  toRaw(nowNode.value).enabled = false;
-  toRaw(tileFeature.value).tileset.enabled = false; //设置tiles隐藏
-  // debugger;
-  document
-    .getElementById("qtcanvas")
-    .removeEventListener("click", mouseClickEvent);
-  // drawExtru(arr);
-  console.log(nowNode.value, "789789", tileFeature.value);
+  Native.Custom.showDeitHandle(function (data) {
+    // debugger;
+    // directionVal.push(data.northeastJson);
+    // directionVal.push(data.northwestJson);
+    // directionVal.push(data.southeastJson);
+    // directionVal.push(data.southwestJson);
 
-  changeBuild();
+    nowCenter.value = data.centerJson;
+
+    document
+      .getElementById("qtcanvas")
+      .removeEventListener("click", mouseClickEvent);
+    // drawExtru(arr);
+    // console.log(nowNode.value, "789789", tileFeature.value);
+
+    changeBuild();
+  });
+
+  // debugger;
 };
 
 // const takePic = () => {
@@ -586,87 +645,107 @@ const finishBuild = () => {
 };
 
 const changeBuild = () => {
-  let center = toRaw(tileFeature.value).boundingVolume.center;
-  let height = floorHeight.value * floorNumber.value;
-  // let height = 50;
-  let length = 100;
-  let width = -oneDepth.value;
-  floorArea.value = length * oneDepth.value * height;
-  let length1 = floorGeomList.length;
-  for (var i = length1 - 1; i > -1; i--) {
-    toRaw(floorGeomList[i]).delete();
-    floorGeomList.splice(i, 1);
-    delete toRaw(floorGeomList[i]);
-  }
-  let boxColor = {
-    r: 166,
-    g: 172,
-    b: 227,
-    a: 1,
-  };
-  let boxColor2;
-  let boxColor3;
-  if (facadeStyle.value == "石材") {
-    boxColor2 = {
-      r: 122,
-      g: 151,
+  Native.Custom.vec3ToJson(toRaw(nowCenter.value), function (center) {
+    // let center = nowCenter.value;
+    let height = floorHeight.value * floorNumber.value;
+    // let height = 50;
+    let length = 100;
+    let width = -oneDepth.value;
+    floorArea.value = length * oneDepth.value * height;
+    let length1 = floorGeomList.length;
+    for (var i = length1 - 1; i > -1; i--) {
+      toRaw(floorGeomList[i]).delete();
+      floorGeomList.splice(i, 1);
+      delete toRaw(floorGeomList[i]);
+    }
+    let boxColor = {
+      r: 166,
+      g: 172,
       b: 227,
       a: 1,
     };
-  } else {
-    boxColor2 = {
-      r: 122,
-      g: 151,
-      b: 227,
-      a: 0.5,
-    };
-  }
-  if (roomTop.value == "楼顶停车") {
-    boxColor3 = {
-      r: 167,
-      g: 81,
-      b: 223,
-      a: 1,
-    };
-  } else {
-    boxColor3 = {
-      r: 87,
-      g: 127,
-      b: 223,
-      a: 1,
-    };
-  }
-
-  if (steps.value == 2) {
-    boxColor = window.boxColor1;
+    let boxColor2;
+    let boxColor3;
     if (facadeStyle.value == "石材") {
-      boxColor2 = window.boxColor2;
+      boxColor2 = {
+        r: 122,
+        g: 151,
+        b: 227,
+        a: 1,
+      };
     } else {
-      boxColor2 = window.boxColor5;
+      boxColor2 = {
+        r: 122,
+        g: 151,
+        b: 227,
+        a: 0.5,
+      };
     }
     if (roomTop.value == "楼顶停车") {
-      boxColor3 = window.boxColor4;
+      boxColor3 = {
+        r: 167,
+        g: 81,
+        b: 223,
+        a: 1,
+      };
     } else {
-      boxColor3 = window.boxColor3;
+      boxColor3 = {
+        r: 87,
+        g: 127,
+        b: 223,
+        a: 1,
+      };
     }
-  }
 
-  switch (checkType.value) {
-    case 1:
-      oneBuild(center, length, width, height, boxColor, boxColor2, boxColor3);
-      break;
-    case 2:
-      twoBuild(center, length, width, height, boxColor, boxColor2, boxColor3);
-      break;
-    case 3:
-      threeBuild(center, length, width, height, boxColor, boxColor2, boxColor3);
-      break;
-    case 4:
-      fourBuild(center, length, width, height, boxColor, boxColor2, boxColor3);
-      break;
-    default:
-      break;
-  }
+    if (steps.value == 2) {
+      boxColor = window.boxColor1;
+      if (facadeStyle.value == "石材") {
+        boxColor2 = window.boxColor2;
+      } else {
+        boxColor2 = window.boxColor5;
+      }
+      if (roomTop.value == "楼顶停车") {
+        boxColor3 = window.boxColor4;
+      } else {
+        boxColor3 = window.boxColor3;
+      }
+    }
+
+    switch (checkType.value) {
+      case 1:
+        oneBuild(center, length, width, height, boxColor, boxColor2, boxColor3);
+        break;
+      case 2:
+        twoBuild(center, length, width, height, boxColor, boxColor2, boxColor3);
+        break;
+      case 3:
+        threeBuild(
+          center,
+          length,
+          width,
+          height,
+          boxColor,
+          boxColor2,
+          boxColor3
+        );
+        break;
+      case 4:
+        fourBuild(
+          center,
+          length,
+          width,
+          height,
+          boxColor,
+          boxColor2,
+          boxColor3
+        );
+        break;
+      default:
+        break;
+    }
+  });
+
+  return;
   const worldPosition =
     GlobalViewer.scene.globe.ellipsoid.eastNorthUpToFixedFrame(
       center.toCartesian3()
@@ -834,26 +913,51 @@ const oneBuild = (
     bevelEnabled: false,
   };
   const box2 = new THREE.ExtrudeGeometry(shape3, extrudeSettings3);
-  var selfPosition = GlobalViewer.scene.globe.ellipsoid.eastNorthUpToFixedFrame(
-    center.toCartesian3()
-  );
   let attributr = geometry.attributes;
   let att2 = box1.attributes;
   let att3 = box2.attributes;
 
-  let e1 = drawLine(
-    GlobalViewer.scene,
-    attributr.position.array,
-    "1",
-    boxColor,
-    1
+  // let e1 = drawLine(
+  //   GlobalViewer.scene,
+  //   attributr.position.array,
+  //   "1",
+  //   boxColor,
+  //   1
+  // );
+  // let e2 = drawLine(GlobalViewer.scene, att2.position.array, "2", boxColor2, 1);
+  // let e3 = drawLine(GlobalViewer.scene, att3.position.array, "3", boxColor3, 1);
+  // let arr = [];
+  // arr.push(e1, e2, e3);
+  // // arr.push(e2);
+  // floorGeomList.push(e1, e2, e3);
+  // console.log(arr, "9999999999999");
+  // console.log(attributr.position.array, "7777777777777777");
+  // let arr1 = [];
+  // attributr.position.array.forEach((i) => {
+  //   arr1.push(i);
+  // });
+  // let arr2 = [];
+  // att2.position.array.forEach((i) => {
+  //   arr2.push(i);
+  // });
+  // let arr3 = [];
+  // att3.position.array.forEach((i) => {
+  //   arr3.push(i);
+  // });
+  // Native.Custom.vec3ToJson(center, function (cb) {
+  //   console.log(cb, "cb");
+  // });
+  Native.Custom.drawBuild(
+    center,
+    attributr,
+    att2,
+    att3,
+    toRaw(floorRotate.value)
   );
-  let e2 = drawLine(GlobalViewer.scene, att2.position.array, "2", boxColor2, 1);
-  let e3 = drawLine(GlobalViewer.scene, att3.position.array, "3", boxColor3, 1);
-  let arr = [];
-  arr.push(e1, e2, e3);
-  // arr.push(e2);
-  floorGeomList.push(e1, e2, e3);
+  return;
+  var selfPosition = GlobalViewer.scene.globe.ellipsoid.eastNorthUpToFixedFrame(
+    center.toCartesian3()
+  );
   const mat = rotationEntity(selfPosition, 0, 0, floorRotate.value, 0);
   const transtion = SSmap.Matrix4.fromTranslation(
     SSmap.Vector3.create(40, -50, -34)
@@ -2095,7 +2199,8 @@ onMounted(() => {
     }
     .checkbutton {
       position: absolute;
-      margin-top: 240px;
+      margin-top: 40%;
+      // margin-bottom: 200px;
     }
   }
   .show-content {

@@ -6,6 +6,7 @@ export const useUsersStore = defineStore("app", {
       check: 0,
       worldPosition: {},
       pointArr: [],
+      tilesArr: [],
     };
   },
   getters: {},

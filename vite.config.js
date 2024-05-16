@@ -13,5 +13,11 @@ export default defineConfig({
       "Cross-Origin-Embedder-Policy": "require-corp",
       "Cross-Origin-Opener-Policy": "same-origin",
     },
+    resolve: {
+      alias: {
+        "@": "/src/",
+        "images/": "/src/assets/images/",
+      },
+    },
   },
 });

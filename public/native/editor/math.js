@@ -6,6 +6,34 @@ export function distanceBetweenPoints(point1, point2) {
 
   return Math.sqrt(dx * dx + dy * dy + dz * dz);
 }
+//通过鼠标拾取世界坐标
+export function pickWorldPositionByMouse(x, y) {
+  let scene = GlobalViewer.scene;
+  let ray = scene.mainCamera.screenPointToRay(x, y);
+  let hit = new SSmap.RaycastHit();
+  let point = null;
+  if (scene.raycast(ray, hit)) {
+    point = hit.point; //Vector3
+    //客户端不能直接使用hit.point,重新拷贝一次
+    point = SSmap.Vector3.create(point.x, point.y, point.z);
+  }
+  hit.delete();
+  return point;
+}
+// Vector3转JSON
+export function vec3ToJson(points) {
+  let isArray = Array.isArray(points);
+  points = isArray ? points : [points];
+  let list = [];
+  points.forEach((item) => {
+    let obj = {};
+    obj.x = item.x;
+    obj.y = item.y;
+    obj.z = item.z;
+    list.push(obj);
+  });
+  return isArray ? list : list[0];
+}
 
 //点是否在线上
 export function isPointOnLine(point, start, end, lineWidth) {
@@ -163,7 +191,8 @@ export function rotateRectangle(center, vertices, angle) {
 
 //使用底层库画线
 export function drawLine(scene, pointList, tag, color, opacity) {
-  if (scene == undefined || pointList.length < 2) return;
+  debugger;
+  if (pointList.length < 2) return;
   var polylines = [];
   if (polylines.length != 0) {
     for (var k = 0; k < this.polylines.length; k++) {
