@@ -26,6 +26,7 @@ export const Tileset = {
     // }
     tilesArr.push(tilesetLayer);
     cb(tilesetLayer);
+    
     return;
 
     let entity = new SSmap.Entity();

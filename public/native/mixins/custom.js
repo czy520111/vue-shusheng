@@ -1,6 +1,12 @@
 import { Tileset, tilesArr } from "../core/tiles.js";
+// import * as turf from "@turf/turf";
 // import { useUsersStore } from "../../../src/store/index.js";
-import { calculatePolygonCenter, vec3ToJson } from "../editor/math.js";
+import {
+  calculatePolygonCenter,
+  vec3ToJson,
+  distanceBetweenPoints,
+} from "../editor/math.js";
+import { drawPolygon3D } from "../editor/draw.js";
 let projectLayer = null;
 let tileFeature = null;
 let nowNode = null;
@@ -8,29 +14,37 @@ let factoryNumber = null;
 let modifiedStr = null;
 let frame = null;
 let landNumber = null;
+let nodes = [];
 let ProjectFeature = null;
 let directionVal = [];
 let checkTiles = null;
 let nowTile = null;
+let floorGeomList = [];
 let layers = {};
-let boxColor = {
-  r: 166,
-  g: 172,
-  b: 227,
+window.boxColor1 = { r: 237, g: 235, b: 227, a: 1 }; //外围色
+window.boxColor2 = { r: 203, g: 213, b: 211, a: 1 };
+window.boxColor3 = {
+  //花园色
+  r: 199,
+  g: 225,
+  b: 171,
   a: 1,
 };
-let boxColor2 = {
-  r: 122,
-  g: 151,
-  b: 227,
+window.boxColor4 = {
+  //停车色
+  r: 245,
+  g: 195,
+  b: 151,
   a: 1,
 };
-let boxColor3 = {
-  r: 167,
-  g: 81,
-  b: 223,
-  a: 1,
+window.boxColor5 = {
+  //玻璃
+  r: 219,
+  g: 255,
+  b: 255,
+  a: 0.75,
 };
+
 export const Custom = {
   addNode(options, cb) {
     if (!options.data || typeof options.data != "object") {
@@ -57,7 +71,6 @@ export const Custom = {
     projectLayer.sceneMode = SSmap.TextureProjectionSceneMode.WholeScene;
     projectLayer.textureSize = options.textureSize;
     projectLayer.beforeTranslucent = true;
-    let nodes = [];
 
     let features = options.data.features; //加载后的jeojson数据
     features.forEach((feature, index) => {
@@ -99,17 +112,25 @@ export const Custom = {
 
       let node = new SSmap.ProjectionNode();
       // let uuid = store.add(node);
-
+      const scaleFactor = 1.15;
       let cartoArr = new SSmap.CartographicVector();
       let points = coordinates[0];
       let newPoints = caclRoid(points);
-      //   var poly = turf.polygon([points]);
-      //   var maxPoly = turf.transformScale(poly, 1.2);
-      //   let minPoly = turf.transformScale(poly, 0.85);
-      //   var union = turf.union(maxPoly, minPoly);
-      newPoints.forEach((point) => {
+
+      // var line = turf.lineString(points);
+      // var bbox = turf.bbox(line);
+
+      // var bboxPolygon = turf.bboxPolygon(bbox);
+      // let bboxPoint = bboxPolygon.geometry.coordinates[0];
+      // let boxPoly = turf.polygon([bboxPoint]);
+      // var poly = turf.polygon([points]);
+      // var scaledPoly = turf.transformScale(poly, scaleFactor);
+      // var intersection = turf.difference(boxPoly, poly);
+      // var triangles = turf.tesselate(poly);
+      newPoints.forEach((point, index) => {
         let carto = SSmap.Cartographic.fromDegrees(point[0], point[1], 0);
         // console.log("88888888", carto, point);
+
         cartoArr.push_back(carto);
       });
       node.setPoints(cartoArr);
@@ -138,7 +159,7 @@ export const Custom = {
       node.setFeature(feature);
       node.setColor(SSmap.Color.fromRgb(0, 0, 255, 0.8 * 255));
       if (style.selectedColorRgab.length) {
-        node.setSelectedColor(SSmap.Color.fromRgb(255, 0, 0, 0.8 * 255));
+        node.setSelectedColor(SSmap.Color.fromRgb(0, 0, 255, 0.8 * 255));
       }
 
       if (style.strokeColorRgba.length) {
@@ -191,7 +212,7 @@ export const Custom = {
         colorRgba: [0, 0, 255, 0.8],
         strokeColorRgba: [0, 0, 255, 0.8],
         selectedColorRgab: [0, 255, 0, 0.8],
-        strokeWidth: 1,
+        strokeWidth: 0.1,
         selectedColorAlpha: 0.7,
         alpha: 0.7,
       },
@@ -211,6 +232,17 @@ export const Custom = {
       projectionNode.setColor(window.SSmap.Color.fromRgb(0, 0, 255, 150));
       let projectLayer = layers[sceneMode];
       projectLayer.addNode(projectionNode);
+    });
+  },
+  clearMeasure() {
+    debugger;
+    tilesArr.forEach((item) => {
+      item.enabled = true;
+    });
+    nodes.forEach((item) => {
+      item.setColor(SSmap.Color.fromRgb(255, 255, 255, 0.8 * 255));
+      item.setSelectedColor(SSmap.Color.fromRgb(0, 0, 255, 0.8 * 255));
+      item.setStrokeColor(SSmap.Color.fromRgb(0, 0, 255, 0.8 * 255));
     });
   },
   //添加投影面
@@ -266,50 +298,41 @@ export const Custom = {
     // tileFeature = feature5;
     // console.log(feature, projectLayer, "789789", projectLayer, feature5);
     // let ce = direction.center().toVector3();
-    if (nowNode && feature) {
-      nowNode.setColor(SSmap.Color.fromRgb(0, 0, 255, 0.8 * 255)); //一开始颜色
-      nowNode.setSelectedColor(SSmap.Color.fromRgb(0, 255, 0, 0.8 * 255)); //点击时颜色
-      // (nowNode).setStrokeWidth(3);
-      nowNode.setStrokeColor(SSmap.Color.fromRgb(0, 0, 255, 0.8 * 255));
-    }
+    // if (nowNode && feature) {
+    //   nowNode.setColor(SSmap.Color.fromRgb(0, 0, 255, 0.8 * 255)); //一开始颜色
+    //   nowNode.setSelectedColor(SSmap.Color.fromRgb(0, 255, 0, 0.8 * 255)); //点击时颜色
+    //   // (nowNode).setStrokeWidth(3);
+    //   nowNode.setStrokeColor(SSmap.Color.fromRgb(0, 0, 255, 0.8 * 255));
+    // }
 
     if (feature) {
       Tileset.pickFeature({ x: e.x, y: e.y }, (data) => {
         let name = data.properties.name;
         name = name.slice(0, -3);
-        // console.log(data, "data411");
         tilesArr.forEach((item) => {
-          // console.log(item, "456456");
           if (item.url.includes(name)) {
             nowTile = item;
-            console.log(nowTile, "456456");
           }
-          // item.enabled = false;
         });
       });
-      // createDomLabel(e);
       console.log(tileFeature, "tileFeature");
-      // let dire = tileFeature.tileset.rectangle;
-      // let southwest = dire.southwest().toVector3();
-      // let southeast = dire.southeast().toVector3();
-      // let northeast = dire.northeast().toVector3();
-      // let northwest = dire.northwest().toVector3();
-      // directionVal.push(southwest, southeast, northeast, northwest);
       let Layer = feature.getProperty("Layer");
       let Area = feature.getProperty("area");
       let modified = Layer.substring(0, Layer.lastIndexOf("_"));
       factoryNumber = Layer;
       landNumber = Math.round(Area * 10) / 10;
       modifiedStr = modified;
-      // let polygon = feature.polygon();
-      // debugger;
-
+      // projectLayer.enabled = false;
+      console.log(projectLayer, nodes, "66666666");
+      nodes.forEach((item) => {
+        item.setColor(SSmap.Color.fromRgb(255, 255, 255, 0.8 * 255));
+        item.setSelectedColor(SSmap.Color.fromRgb(0, 0, 255, 0.8 * 255));
+        item.setStrokeColor(SSmap.Color.fromRgb(0, 0, 255, 0.8 * 255));
+      });
       nowNode = projectLayer.getNode(feature);
-      //   this.oldcolor = window.nownode.color();
       nowNode.setColor(SSmap.Color.fromRgb(0, 0, 255, 0.8 * 255));
-      nowNode.setSelectedColor(SSmap.Color.fromRgb(0, 255, 0, 0.8 * 255));
-      nowNode.setStrokeColor(SSmap.Color.fromRgb(0, 0, 255, 0.8 * 255));
-      // console.log(factoryNumber, "ffffaaa");
+      nowNode.setSelectedColor(SSmap.Color.fromRgb(0, 0, 225, 0.8 * 255));
+      nowNode.setStrokeColor(SSmap.Color.fromRgb(0, 0, 225, 0.8 * 255));
       cb({
         feature: true,
         factoryNumber,
@@ -337,76 +360,90 @@ export const Custom = {
     window.GlobalViewer.scene.rootEntity.addComponent(frame);
   },
   showDeitHandle(cb) {
-    console.log(nowNode, "nnnnnnnnn");
+    directionVal.length = 0;
     nowTile.enabled = false;
     let feature = nowNode.feature();
-
+    feature.enabled = false;
+    feature.parent.enabled = false;
+    feature.parent.parent.enabled = false;
     let dire = nowTile.tileset().rectangle;
     let southwest = dire.southwest().toVector3();
     let southeast = dire.southeast().toVector3();
     let northeast = dire.northeast().toVector3();
     let northwest = dire.northwest().toVector3();
     directionVal.push(southwest, southeast, northeast, northwest);
-    let southeastJson = vec3ToJson(southwest);
-    let southwestJson = vec3ToJson(southeast);
-    let northeastJson = vec3ToJson(northeast);
-    let northwestJson = vec3ToJson(northwest);
-
     let centerJson = vec3ToJson(calculatePolygonCenter(directionVal));
-
     cb({
       // center: { x: center.x, y: center.y, z: center.z },
       centerJson,
     });
-    // console.log(center, "dddddd");
-    // feature.enabled = false;
-    // feature.parent.enabled = false;
-    // feature.parent.parent.enabled = false;
-    // nowNode.enabled = false;
-
-    // let style = new SSmap.TilesetStyle();
-    // style.show = function (tileFeature) {
-    //   let name = feature.getProperty("visible");
-    //   return true;
-    // };
-    // tileFeature.tileset.enabled = false; //设置tiles隐藏
-    // let center = tileFeature.boundingVolume.center;
-
-    // let till = tileFeature.tileset;
-    // cb({ till, center });
-    // console.log(till, "tttttttttt");
   },
   //json转Vector3
   vec3ToJson(point, cb) {
+    console.log(directionVal, "4444444");
+    let l1 = distanceBetweenPoints(directionVal[0], directionVal[1]);
+    let l2 = distanceBetweenPoints(directionVal[1], directionVal[2]);
+    let length = Math.max(l1, l2);
+    console.log(length, "8888888888");
     point = SSmap.Vector3.create(point.x, point.y, point.z);
-    cb({ x: point.x, y: point.y, z: point.z });
+    cb({
+      center: {
+        x: point.x,
+        y: point.y,
+        z: point.z,
+      },
+      length,
+    });
   },
-  drawBuild(center, arr1, arr2, arr3, floorRotate, cb) {
-    console.log(arr1, boxColor.r, this, "7777777777777777");
+  lastStepBack() {
+    directionVal.length = 0;
+    let feature = nowNode.feature();
+    feature.enabled = true;
+    feature.parent.enabled = true;
+    feature.parent.parent.enabled = true;
+    nowNode.enabled = true;
+    nowTile.enabled = true; //设置tiles隐藏
+    let length1 = floorGeomList.length;
+    for (var i = length1 - 1; i > -1; i--) {
+      floorGeomList[i].delete();
+      floorGeomList.splice(i, 1);
+      delete floorGeomList[i];
+    }
+
+    nodes.forEach((item) => {
+      item.setColor(SSmap.Color.fromRgb(0, 0, 255, 0.8 * 255));
+      item.setSelectedColor(SSmap.Color.fromRgb(0, 0, 255, 0.8 * 255));
+      item.setStrokeColor(SSmap.Color.fromRgb(0, 0, 255, 0.8 * 255));
+    });
+  },
+  drawBuild(
+    center,
+    arr1,
+    arr2,
+    arr3,
+    boxColor,
+    boxColor2,
+    boxColor3,
+    floorRotate,
+    steps,
+    cb
+  ) {
+    console.log(floorGeomList, "8888888888", directionVal);
+    nowNode.enabled = false;
+    let length1 = floorGeomList.length;
+    for (var i = length1 - 1; i > -1; i--) {
+      floorGeomList[i].delete();
+      floorGeomList.splice(i, 1);
+      delete floorGeomList[i];
+    }
+    // console.log(arr1, boxColor.r, this, "7777777777777777");
     // console.log(arr, 44444);
-    let e1 = this.drawLine(
-      GlobalViewer.scene,
-      arr1.position.array,
-      "1",
-      boxColor,
-      1
-    );
-    let e2 = this.drawLine(
-      GlobalViewer.scene,
-      arr2.position.array,
-      "2",
-      boxColor2,
-      1
-    );
-    let e3 = this.drawLine(
-      GlobalViewer.scene,
-      arr3.position.array,
-      "3",
-      boxColor3,
-      1
-    );
+    let e1 = this.drawLine(GlobalViewer.scene, arr1, "1", boxColor, 1);
+    let e2 = this.drawLine(GlobalViewer.scene, arr2, "2", boxColor2, 1);
+    let e3 = this.drawLine(GlobalViewer.scene, arr3, "3", boxColor3, 1);
     let arr = [];
     arr.push(e1, e2, e3);
+    floorGeomList.push(e1, e2, e3);
     center = SSmap.Vector3.create(center.x, center.y, center.z);
     // let carto = center.toCartesian3();
     var selfPosition =
@@ -415,14 +452,260 @@ export const Custom = {
       );
     const mat = this.rotationEntity(selfPosition, 0, 0, floorRotate, 0);
     const transtion = SSmap.Matrix4.fromTranslation(
-      SSmap.Vector3.create(40, -50, 59)
+      SSmap.Vector3.create(50, -40, 59.5)
     );
     const matrix4 = SSmap.Matrix4.multiply(mat, transtion);
+    // console.log(center, matrix4, "4444444444");
     arr.forEach((i) => {
+      // console.log(i.transform.matrix, "88888888");
       i.transform.matrix = matrix4;
     });
+    this.drawExtru(center, steps);
     // cb("456456");
     // cb(matrix4);
+  },
+  drawTwoBuild(
+    center,
+    arr1,
+    arr2,
+    arr3,
+    arr4,
+    arr5,
+    boxColor,
+    boxColor2,
+    boxColor3,
+    floorRotate,
+    steps,
+    cb
+  ) {
+    nowNode.enabled = false;
+    let length1 = floorGeomList.length;
+    for (var i = length1 - 1; i > -1; i--) {
+      floorGeomList[i].delete();
+      floorGeomList.splice(i, 1);
+      delete floorGeomList[i];
+    }
+    // console.log(arr1, boxColor.r, this, "7777777777777777");
+    // console.log(arr, 44444);
+    // allArr.forEach((i) => {
+    //   let el = this.drawLine(GlobalViewer.scene, i.arr, i.tag, i.color, 1);
+    // });
+    let e1 = this.drawLine(GlobalViewer.scene, arr1, "1", boxColor, 1);
+    let e2 = this.drawLine(GlobalViewer.scene, arr2, "2", boxColor2, 1);
+    let e3 = this.drawLine(GlobalViewer.scene, arr3, "3", boxColor3, 1);
+    let e4 = this.drawLine(GlobalViewer.scene, arr4, "1", boxColor, 1);
+    let e5 = this.drawLine(GlobalViewer.scene, arr5, "3", boxColor3, 1);
+    let arr = [];
+    arr.push(e1, e2, e3, e4, e5);
+    floorGeomList.push(e1, e2, e3, e4, e5);
+    center = SSmap.Vector3.create(center.x, center.y, center.z);
+    // let carto = center.toCartesian3();
+    var selfPosition =
+      GlobalViewer.scene.globe.ellipsoid.eastNorthUpToFixedFrame(
+        center.toCartesian3()
+      );
+    const mat = this.rotationEntity(selfPosition, 0, 0, floorRotate, 0);
+    const transtion = SSmap.Matrix4.fromTranslation(
+      SSmap.Vector3.create(50, -40, 59.5)
+    );
+    const matrix4 = SSmap.Matrix4.multiply(mat, transtion);
+    // console.log(center, matrix4, "4444444444");
+    arr.forEach((i) => {
+      // console.log(i.transform.matrix, "88888888");
+      i.transform.matrix = matrix4;
+    });
+    this.drawExtru(center, steps);
+    // cb("456456");
+    // cb(matrix4);
+  },
+  drawThreeBuild(
+    center,
+    arr1,
+    arr2,
+    arr3,
+    arr4,
+    arr5,
+    arr6,
+    arr7,
+    arr8,
+    boxColor,
+    boxColor2,
+    boxColor3,
+    floorRotate,
+    steps,
+    cb
+  ) {
+    nowNode.enabled = false;
+    let length1 = floorGeomList.length;
+    for (var i = length1 - 1; i > -1; i--) {
+      floorGeomList[i].delete();
+      floorGeomList.splice(i, 1);
+      delete floorGeomList[i];
+    }
+    // console.log(arr1, boxColor.r, this, "7777777777777777");
+    // console.log(arr, 44444);
+    // allArr.forEach((i) => {
+    //   let el = this.drawLine(GlobalViewer.scene, i.arr, i.tag, i.color, 1);
+    // });
+    let e1 = this.drawLine(GlobalViewer.scene, arr1, "1", boxColor, 1);
+    let e2 = this.drawLine(GlobalViewer.scene, arr2, "2", boxColor2, 1);
+    let e3 = this.drawLine(GlobalViewer.scene, arr3, "3", boxColor, 1);
+    let e4 = this.drawLine(GlobalViewer.scene, arr4, "1", boxColor, 1);
+    let e5 = this.drawLine(GlobalViewer.scene, arr5, "3", boxColor2, 1);
+    let e6 = this.drawLine(GlobalViewer.scene, arr6, "1", boxColor3, 1);
+    let e7 = this.drawLine(GlobalViewer.scene, arr7, "3", boxColor3, 1);
+    let e8 = this.drawLine(GlobalViewer.scene, arr8, "1", boxColor3, 1);
+    let arr = [];
+    arr.push(e1, e2, e3, e4, e5, e6, e7, e8);
+    floorGeomList.push(e1, e2, e3, e4, e5, e6, e7, e8);
+    center = SSmap.Vector3.create(center.x, center.y, center.z);
+    // let carto = center.toCartesian3();
+    var selfPosition =
+      GlobalViewer.scene.globe.ellipsoid.eastNorthUpToFixedFrame(
+        center.toCartesian3()
+      );
+    const mat = this.rotationEntity(selfPosition, 0, 0, floorRotate, 0);
+    const transtion = SSmap.Matrix4.fromTranslation(
+      SSmap.Vector3.create(50, -40, 59.5)
+    );
+    const matrix4 = SSmap.Matrix4.multiply(mat, transtion);
+    // console.log(center, matrix4, "4444444444");
+    arr.forEach((i) => {
+      // console.log(i.transform.matrix, "88888888");
+      i.transform.matrix = matrix4;
+    });
+    this.drawExtru(center, steps);
+    // cb("456456");
+    // cb(matrix4);
+  },
+  drawFourBuild(
+    center,
+    arr1,
+    arr2,
+    arr3,
+    arr4,
+    arr5,
+    arr6,
+    arr7,
+    arr8,
+    arr9,
+    arr10,
+    arr11,
+    arr12,
+    boxColor,
+    boxColor2,
+    boxColor3,
+    floorRotate,
+    steps,
+    cb
+  ) {
+    nowNode.enabled = false;
+    let length1 = floorGeomList.length;
+    for (var i = length1 - 1; i > -1; i--) {
+      floorGeomList[i].delete();
+      floorGeomList.splice(i, 1);
+      delete floorGeomList[i];
+    }
+    // console.log(arr1, boxColor.r, this, "7777777777777777");
+    // console.log(arr, 44444);
+    // allArr.forEach((i) => {
+    //   let el = this.drawLine(GlobalViewer.scene, i.arr, i.tag, i.color, 1);
+    // });
+    let e1 = this.drawLine(GlobalViewer.scene, arr1, "1", boxColor, 1);
+    let e2 = this.drawLine(GlobalViewer.scene, arr2, "2", boxColor2, 1);
+    let e3 = this.drawLine(GlobalViewer.scene, arr3, "3", boxColor3, 1);
+    let e4 = this.drawLine(GlobalViewer.scene, arr4, "1", boxColor, 1);
+    let e5 = this.drawLine(GlobalViewer.scene, arr5, "3", boxColor, 1);
+    let e6 = this.drawLine(GlobalViewer.scene, arr6, "1", boxColor, 1);
+    let e7 = this.drawLine(GlobalViewer.scene, arr7, "3", boxColor3, 1);
+    let e8 = this.drawLine(GlobalViewer.scene, arr8, "1", boxColor2, 1);
+    let e9 = this.drawLine(GlobalViewer.scene, arr9, "3", boxColor3, 1);
+    let e10 = this.drawLine(GlobalViewer.scene, arr10, "1", boxColor2, 1);
+    let e11 = this.drawLine(GlobalViewer.scene, arr11, "3", boxColor2, 1);
+    let e12 = this.drawLine(GlobalViewer.scene, arr12, "1", boxColor3, 1);
+    let arr = [];
+    arr.push(e1, e2, e3, e4, e5, e6, e7, e8, e9, e10, e11, e12);
+    floorGeomList.push(e1, e2, e3, e4, e5, e6, e7, e8, e9, e10, e11, e12);
+    center = SSmap.Vector3.create(center.x, center.y, center.z);
+    // let carto = center.toCartesian3();
+    var selfPosition =
+      GlobalViewer.scene.globe.ellipsoid.eastNorthUpToFixedFrame(
+        center.toCartesian3()
+      );
+    const mat = this.rotationEntity(selfPosition, 0, 0, floorRotate, 0);
+    const transtion = SSmap.Matrix4.fromTranslation(
+      SSmap.Vector3.create(50, -40, 59.5)
+    );
+    const matrix4 = SSmap.Matrix4.multiply(mat, transtion);
+    // console.log(center, matrix4, "4444444444");
+    arr.forEach((i) => {
+      // console.log(i.transform.matrix, "88888888");
+      i.transform.matrix = matrix4;
+    });
+    this.drawExtru(center, steps);
+    // cb("456456");
+    // cb(matrix4);
+  },
+  drawExtru(center, steps) {
+    // return;
+    console.log(steps, "111111111111");
+    const worldPosition =
+      GlobalViewer.scene.globe.ellipsoid.eastNorthUpToFixedFrame(
+        center.toCartesian3()
+      );
+    let worldToLocal = worldPosition.inverted();
+    let pointArr = [];
+    directionVal.forEach((item) => {
+      let point;
+      point = SSmap.Matrix4.multiplyByVector3(worldToLocal, item);
+      let rotation = SSmap.Quaternion.fromEulerAngles(
+        0,
+        0,
+        40
+      ).toRotationMatrix();
+      let modelMatrix = SSmap.Matrix4.fromRotationTranslation(
+        rotation,
+        SSmap.Vector3.create(0, 0, 0)
+      );
+      let scaleMatrix = SSmap.Matrix4.fromScale(
+        SSmap.Vector3.create(0.8, 0.8, 0.8)
+      );
+      let matrix = SSmap.Matrix4.multiply(worldPosition, modelMatrix);
+      matrix = SSmap.Matrix4.multiply(matrix, scaleMatrix);
+      point = SSmap.Matrix4.multiplyByVector3(matrix, point);
+      pointArr.push(point);
+      // rotatePoints.push(point);
+    });
+    // rotatePoints = pointArr;
+    var altitude = SSmap.AltitudeMethod.OnTerrain;
+    if (steps == 2) {
+      pointArr.push(pointArr[0]);
+      var polylineObj = {
+        width: 3,
+        alpha: 1,
+        pointArr: pointArr,
+        color: SSmap.Color.fromRgb(0, 0, 255, 200),
+        altitude: SSmap.AltitudeMethod.Absolute,
+        dash: true,
+        height: 30,
+        depthTest: false,
+        name: "move",
+      };
+      var polyline = drawPolyline(polylineObj);
+      floorGeomList.push(polyline);
+    } else {
+      var obj1 = {
+        alpha: 100, //边界透明度
+        pointArr: pointArr, //点坐标
+        color: SSmap.Color.fromRgb(0, 102, 255, 200), //填充颜色
+        borColor: SSmap.Color.fromRgb(0, 102, 255, 200), //边界颜色
+        altitude: altitude, //海拔高度模式
+        name: "mianhuancong", //名称
+        width: 0, //边界宽度
+      };
+      var Aentity = drawPolygon3D(obj1);
+      floorGeomList.push(Aentity);
+    }
   },
   rotationEntity(mat, degX, degY, degZ, offsetHeight) {
     let carto = mat.translation().toCartographic();
@@ -482,6 +765,7 @@ export const Custom = {
   drawLine(scene, pointList, tag, color, opacity) {
     if (pointList.length < 2) return;
     var polylines = [];
+
     if (polylines.length != 0) {
       for (var k = 0; k < this.polylines.length; k++) {
         if (polylines[k].name == tag) polylines.splice(k, 1);
@@ -498,7 +782,7 @@ export const Custom = {
 
     var vertexArray = vertices;
     var stripSize = 3 * 4; //步长（ x,y,z  * float）
-    var vertexBuffer = SSmap.Buffer.createVertexBuffer(pointList, stripSize);
+    var vertexBuffer = SSmap.Buffer.createVertexBuffer(vertexArray, stripSize);
     var posAttr = SSmap.GeometryAttribute.createPositionAttribute(
       vertexBuffer,
       0,

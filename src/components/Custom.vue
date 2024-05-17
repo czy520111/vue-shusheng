@@ -339,6 +339,7 @@ const modelWidth = ref(null);
 
 const initTiles = () => {
   // let SSmap = window.SSmap;
+  clearMeasure();
   let position = {
     longitude: 113.92803903224512,
     latitude: 22.624062856429408,
@@ -419,6 +420,11 @@ const initTiles = () => {
   createEvent();
 };
 
+const clearMeasure = () => {
+  console.log("clearMeasure");
+  // Native.Custom.clearMeasure();
+  // let projectLayer = toRaw(projectLayer.value);
+};
 const createEvent = () => {
   document
     .getElementById("qtcanvas")
@@ -593,11 +599,15 @@ const lastStep = () => {
     // showEditFloor.value = true;
     showContent.value = true;
     showNext.value = true;
+    createEvent();
   } else {
     showEditFloor.value = false;
     showSureButton.value = false;
     showContent.value = false;
     showNumber.value = false;
+    Native.Custom.lastStepBack();
+    createEvent();
+    return;
     directionVal.length = 0;
     let feature = toRaw(nowNode.value).feature();
     feature.enabled = true;
@@ -616,8 +626,6 @@ const lastStep = () => {
     // toRaw(nowNode.value).setStrokeWidth(3);
     toRaw(nowNode.value).setStrokeColor(SSmap.Color.fromRgb(0, 0, 255, 150));
   }
-
-  createEvent();
 };
 
 const nextStep = () => {
@@ -645,8 +653,9 @@ const finishBuild = () => {
 };
 
 const changeBuild = () => {
-  Native.Custom.vec3ToJson(toRaw(nowCenter.value), function (center) {
+  Native.Custom.vec3ToJson(toRaw(nowCenter.value), function (data) {
     // let center = nowCenter.value;
+    let center = data.center;
     let height = floorHeight.value * floorNumber.value;
     // let height = 50;
     let length = 100;
@@ -932,27 +941,31 @@ const oneBuild = (
   // floorGeomList.push(e1, e2, e3);
   // console.log(arr, "9999999999999");
   // console.log(attributr.position.array, "7777777777777777");
-  // let arr1 = [];
-  // attributr.position.array.forEach((i) => {
-  //   arr1.push(i);
-  // });
-  // let arr2 = [];
-  // att2.position.array.forEach((i) => {
-  //   arr2.push(i);
-  // });
-  // let arr3 = [];
-  // att3.position.array.forEach((i) => {
-  //   arr3.push(i);
-  // });
+  let arr1 = [];
+  attributr.position.array.forEach((i) => {
+    arr1.push(i);
+  });
+  let arr2 = [];
+  att2.position.array.forEach((i) => {
+    arr2.push(i);
+  });
+  let arr3 = [];
+  att3.position.array.forEach((i) => {
+    arr3.push(i);
+  });
   // Native.Custom.vec3ToJson(center, function (cb) {
   //   console.log(cb, "cb");
   // });
   Native.Custom.drawBuild(
     center,
-    attributr,
-    att2,
-    att3,
-    toRaw(floorRotate.value)
+    arr1,
+    arr2,
+    arr3,
+    boxColor,
+    boxColor2,
+    boxColor3,
+    toRaw(floorRotate.value),
+    steps.value
   );
   return;
   var selfPosition = GlobalViewer.scene.globe.ellipsoid.eastNorthUpToFixedFrame(
@@ -1138,38 +1151,73 @@ const twoBuild = (
   };
   let box4 = new THREE.ExtrudeGeometry(shape6, extrudeSettings6);
 
-  var selfPosition = GlobalViewer.scene.globe.ellipsoid.eastNorthUpToFixedFrame(
-    center.toCartesian3()
-  );
+  // var selfPosition = GlobalViewer.scene.globe.ellipsoid.eastNorthUpToFixedFrame(
+  //   center.toCartesian3()
+  // );
 
   let attributr = geometry.attributes;
   let att2 = box1.attributes;
   let att3 = box2.attributes;
   let att4 = box3.attributes;
   let att5 = box4.attributes;
-  let e1 = drawLine(
-    GlobalViewer.scene,
-    attributr.position.array,
-    "1",
-    boxColor,
-    1
-  );
-  let e2 = drawLine(GlobalViewer.scene, att2.position.array, "2", boxColor2, 1);
-  let e3 = drawLine(GlobalViewer.scene, att3.position.array, "3", boxColor3, 1);
-  let e4 = drawLine(GlobalViewer.scene, att4.position.array, "1", boxColor, 1);
-  let e5 = drawLine(GlobalViewer.scene, att5.position.array, "2", boxColor3, 1);
-  let arr = [];
-  arr.push(e1, e2, e3, e4, e5);
-  // arr.push(e2);
-  floorGeomList.push(e1, e2, e3, e4, e5);
-  const mat = rotationEntity(selfPosition, 0, 0, floorRotate.value, 0);
-  const transtion = SSmap.Matrix4.fromTranslation(
-    SSmap.Vector3.create(40, -50, -34)
-  );
-  const matrix4 = SSmap.Matrix4.multiply(mat, transtion);
-  arr.forEach((i) => {
-    i.transform.matrix = matrix4;
+  let arr1 = [];
+  attributr.position.array.forEach((i) => {
+    arr1.push(i);
   });
+  let arr2 = [];
+  att2.position.array.forEach((i) => {
+    arr2.push(i);
+  });
+  let arr3 = [];
+  att3.position.array.forEach((i) => {
+    arr3.push(i);
+  });
+  let arr4 = [];
+  att4.position.array.forEach((i) => {
+    arr4.push(i);
+  });
+  let arr5 = [];
+  att5.position.array.forEach((i) => {
+    arr5.push(i);
+  });
+  let allArr = [];
+  allArr.push(arr1, arr2, arr3, arr4, arr5);
+  Native.Custom.drawTwoBuild(
+    center,
+    arr1,
+    arr2,
+    arr3,
+    arr4,
+    arr5,
+    boxColor,
+    boxColor2,
+    boxColor3,
+    toRaw(floorRotate.value),
+    steps.value
+  );
+  // let e1 = drawLine(
+  //   GlobalViewer.scene,
+  //   attributr.position.array,
+  //   "1",
+  //   boxColor,
+  //   1
+  // );
+  // let e2 = drawLine(GlobalViewer.scene, att2.position.array, "2", boxColor2, 1);
+  // let e3 = drawLine(GlobalViewer.scene, att3.position.array, "3", boxColor3, 1);
+  // let e4 = drawLine(GlobalViewer.scene, att4.position.array, "1", boxColor, 1);
+  // let e5 = drawLine(GlobalViewer.scene, att5.position.array, "2", boxColor3, 1);
+  // let arr = [];
+  // arr.push(e1, e2, e3, e4, e5);
+  // // arr.push(e2);
+  // floorGeomList.push(e1, e2, e3, e4, e5);
+  // const mat = rotationEntity(selfPosition, 0, 0, floorRotate.value, 0);
+  // const transtion = SSmap.Matrix4.fromTranslation(
+  //   SSmap.Vector3.create(40, -50, -34)
+  // );
+  // const matrix4 = SSmap.Matrix4.multiply(mat, transtion);
+  // arr.forEach((i) => {
+  //   i.transform.matrix = matrix4;
+  // });
 };
 const threeBuild = (
   center,
@@ -1475,9 +1523,9 @@ const threeBuild = (
   };
   let box10 = new THREE.ExtrudeGeometry(shape10, extrudeSettings10);
 
-  var selfPosition = GlobalViewer.scene.globe.ellipsoid.eastNorthUpToFixedFrame(
-    center.toCartesian3()
-  );
+  // var selfPosition = GlobalViewer.scene.globe.ellipsoid.eastNorthUpToFixedFrame(
+  //   center.toCartesian3()
+  // );
 
   let attributr = geometry.attributes;
   let att2 = box1.attributes;
@@ -1488,6 +1536,61 @@ const threeBuild = (
   let att8 = box8.attributes;
   let att9 = box9.attributes;
   let att10 = box10.attributes;
+  let arr1 = [];
+  attributr.position.array.forEach((i) => {
+    arr1.push(i);
+  });
+  let arr2 = [];
+  att2.position.array.forEach((i) => {
+    arr2.push(i);
+  });
+  let arr3 = [];
+  att3.position.array.forEach((i) => {
+    arr3.push(i);
+  });
+  let arr4 = [];
+  att4.position.array.forEach((i) => {
+    arr4.push(i);
+  });
+  let arr6 = [];
+  att6.position.array.forEach((i) => {
+    arr6.push(i);
+  });
+  let arr7 = [];
+  att7.position.array.forEach((i) => {
+    arr7.push(i);
+  });
+  let arr8 = [];
+  att8.position.array.forEach((i) => {
+    arr8.push(i);
+  });
+  let arr9 = [];
+  att9.position.array.forEach((i) => {
+    arr9.push(i);
+  });
+  let arr10 = [];
+  att10.position.array.forEach((i) => {
+    arr10.push(i);
+  });
+
+  Native.Custom.drawThreeBuild(
+    center,
+    arr1,
+    arr2,
+    arr4,
+    arr6,
+    arr7,
+    arr8,
+    arr9,
+    arr10,
+    boxColor,
+    boxColor2,
+    boxColor3,
+    toRaw(floorRotate.value),
+    steps.value
+  );
+
+  return;
   let e1 = drawLine(
     GlobalViewer.scene,
     attributr.position.array,
@@ -1932,9 +2035,9 @@ const fourBuild = (
   };
   let box15 = new THREE.ExtrudeGeometry(shape15, extrudeSettings15);
 
-  var selfPosition = GlobalViewer.scene.globe.ellipsoid.eastNorthUpToFixedFrame(
-    center.toCartesian3()
-  );
+  // var selfPosition = GlobalViewer.scene.globe.ellipsoid.eastNorthUpToFixedFrame(
+  //   center.toCartesian3()
+  // );
   let attributr = geometry.attributes;
   let att2 = box1.attributes;
   let att3 = box2.attributes;
@@ -1947,6 +2050,76 @@ const fourBuild = (
   let att12 = box12.attributes;
   let att14 = box14.attributes;
   let att15 = box15.attributes;
+  let arr1 = [];
+  attributr.position.array.forEach((i) => {
+    arr1.push(i);
+  });
+  let arr2 = [];
+  att2.position.array.forEach((i) => {
+    arr2.push(i);
+  });
+  let arr3 = [];
+  att3.position.array.forEach((i) => {
+    arr3.push(i);
+  });
+  let arr4 = [];
+  att4.position.array.forEach((i) => {
+    arr4.push(i);
+  });
+  let arr6 = [];
+  att6.position.array.forEach((i) => {
+    arr6.push(i);
+  });
+  let arr7 = [];
+  att7.position.array.forEach((i) => {
+    arr7.push(i);
+  });
+  let arr8 = [];
+  att8.position.array.forEach((i) => {
+    arr8.push(i);
+  });
+  let arr9 = [];
+  att9.position.array.forEach((i) => {
+    arr9.push(i);
+  });
+  let arr11 = [];
+  att11.position.array.forEach((i) => {
+    arr11.push(i);
+  });
+  let arr12 = [];
+  att12.position.array.forEach((i) => {
+    arr12.push(i);
+  });
+  let arr14 = [];
+  att14.position.array.forEach((i) => {
+    arr14.push(i);
+  });
+  let arr15 = [];
+  att15.position.array.forEach((i) => {
+    arr15.push(i);
+  });
+  Native.Custom.drawFourBuild(
+    center,
+    arr1,
+    arr2,
+    arr3,
+    arr4,
+    arr6,
+    arr7,
+    arr8,
+    arr9,
+    arr11,
+    arr12,
+    arr14,
+    arr15,
+    boxColor,
+    boxColor2,
+    boxColor3,
+    toRaw(floorRotate.value),
+    steps.value
+  );
+
+  return;
   let e1 = drawLine(
     GlobalViewer.scene,
     attributr.position.array,
@@ -2301,7 +2474,7 @@ onMounted(() => {
   }
   .checktBox {
     position: absolute;
-    left: 80vw;
+    right: -76vw;
     width: 400px;
     box-sizing: border-box;
     background-color: #ffffffb3;
@@ -2367,8 +2540,8 @@ onMounted(() => {
   }
   .picture {
     position: absolute;
-    top: 1100px;
-    left: 1100px;
+    top: 80vh;
+    left: 50vw;
     .el-button {
       width: 100px;
       height: 100px;
