@@ -6,7 +6,8 @@ import {
   vec3ToJson,
   distanceBetweenPoints,
 } from "../editor/math.js";
-import { drawPolygon3D } from "../editor/draw.js";
+import { drawPolygon3D, drawPolyline } from "../editor/draw.js";
+import { scalePolygon, rotatePolygon } from "../math/math.js";
 let projectLayer = null;
 let tileFeature = null;
 let nowNode = null;
@@ -115,8 +116,20 @@ export const Custom = {
       const scaleFactor = 1.15;
       let cartoArr = new SSmap.CartographicVector();
       let points = coordinates[0];
-      let newPoints = caclRoid(points);
-
+      // let newPoints = caclRoid(points);
+      let objArr = [];
+      points.forEach((point, index) => {
+        point = SSmap.Cartographic.fromDegrees(
+          point[0],
+          point[1],
+          0
+        ).toVector3();
+        if (index == points.length - 1) return;
+        objArr.push({ x: point.x, y: point.y, z: point.z });
+      });
+      // let newPoints = rotatePolygon(objArr, 90);
+      let newPoints = scalePolygon(objArr, 8);
+      newPoints.push(newPoints[0]);
       // var line = turf.lineString(points);
       // var bbox = turf.bbox(line);
 
@@ -127,8 +140,21 @@ export const Custom = {
       // var scaledPoly = turf.transformScale(poly, scaleFactor);
       // var intersection = turf.difference(boxPoly, poly);
       // var triangles = turf.tesselate(poly);
+      // newPoints.forEach((point, index) => {
+      //   let carto = SSmap.Cartographic.fromDegrees(point[0], point[1], 0);
+      //   // console.log("88888888", carto, point);
+
+      //   cartoArr.push_back(carto);
+      // });
+
       newPoints.forEach((point, index) => {
-        let carto = SSmap.Cartographic.fromDegrees(point[0], point[1], 0);
+        point = SSmap.Vector3.create(point.x, point.y, point.z);
+        let carto = point.toCartographic();
+        // carto = SSmap.Cartographic.fromDegrees(
+        //   carto.longitude,
+        //   carto.latitude,
+        //   0
+        // );
         // console.log("88888888", carto, point);
 
         cartoArr.push_back(carto);
@@ -173,25 +199,36 @@ export const Custom = {
       nodes.push(node);
     }
     function caclRoid(points) {
-      const centroid = points
-        .reduce(
-          (acc, point) => {
-            acc[0] += point[0];
-            acc[1] += point[1];
-            return acc;
-          },
-          [0, 0]
-        )
-        .map((coord) => coord / points.length);
+      const result = { x: 0, y: 0 };
+      points.forEach((point) => {
+        result.x += point[0];
+        result.y += point[1];
+      });
+      result.x /= points.length;
+      result.y /= points.length;
+      // return result;
 
-      const [Cx, Cy] = centroid;
+      // const centroid = points
+      //   .reduce(
+      //     (acc, point) => {
+      //       acc[0] += point[0];
+      //       acc[1] += point[1];
+      //       return acc;
+      //     },
+      //     [0, 0]
+      //   )
+      //   .map((coord) => coord / points.length);
+
+      // const [Cx, Cy] = result;
+      let Cx = result.x;
+      let Cy = result.y;
 
       console.log(`质心: (${Cx}, ${Cy})`);
 
       // 计算新的坐标点
       const scaledPoints = points.map(([x, y]) => {
-        const x_new = Cx + 1.1 * (x - Cx);
-        const y_new = Cy + 1.1 * (y - Cy);
+        const x_new = Cx + 1.5 * (x - Cx);
+        const y_new = Cy + 1.5 * (y - Cy);
         return [x_new, y_new];
       });
 
@@ -235,7 +272,6 @@ export const Custom = {
     });
   },
   clearMeasure() {
-    debugger;
     tilesArr.forEach((item) => {
       item.enabled = true;
     });

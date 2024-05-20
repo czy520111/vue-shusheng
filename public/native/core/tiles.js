@@ -25,8 +25,14 @@ export const Tileset = {
     //   toRaw(store.tilesArr[16]).enabled = false;
     // }
     tilesArr.push(tilesetLayer);
+    let tileset = tilesetLayer.tileset();
+    tileset.contentLoaded((entity) => {
+      entity.travalRenderers(function (renderer) {
+        //获取每个tile的材质
+      });
+    });
     cb(tilesetLayer);
-    
+
     return;
 
     let entity = new SSmap.Entity();
