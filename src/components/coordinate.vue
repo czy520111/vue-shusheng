@@ -100,32 +100,39 @@ const getText = (event) => {
   //   let point = getWorldPosition(event);
   //   console.log("point", point);
 };
-const getTextEvent = (event) => {
-  // var e = event;
-  // if (e) {
-  //   let feature = window.GlobalViewer.scene.getFeatureByMouse();
-  //   if (feature) {
-  //   debugger;
-  //   console.log("获取线图层属性");
-  //   console.log(feature.parent.text);
-  let el = document.querySelector(".text-info");
-  let text = el.innerText;
-  copyPageUrl();
-  async function copyPageUrl() {
-    try {
+const getTextEvent = async () => {
+  //区分是否是客户端，做不同的复制方法
+  try {
+    let el = document.querySelector(".text-info");
+    let text = el.innerText;
+    const permissionStatus = await navigator.permissions.query({
+      name: "clipboard-write",
+    });
+    if (
+      permissionStatus.state === "granted" ||
+      permissionStatus.state === "prompt"
+    ) {
       await navigator.clipboard.writeText(text);
-      console.log("页面地址已被复制！");
-    } catch (err) {
-      console.error("复制失败: ", err);
-    }
-  }
-  // navigator.clipboard.writeText(text);
-  Native.Point.getTextEvent(text, function (tt) {
-    ElMessage.success("复制成功");
-  });
+      ElMessage.success("复制成功");
+    } else {
+      const textArea = document.createElement("textArea");
+      textArea.value = text;
+      textArea.style.width = 0;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-999px";
+      textArea.style.top = "10px";
+      textArea.setAttribute("readonly", "readonly");
+      document.body.appendChild(textArea);
 
-  //   }
-  // }
+      textArea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textArea);
+      ElMessage.success("复制成功");
+    }
+    // console.log("Page URL copied to clipboard");
+  } catch (err) {
+    console.error("Failed to copy: ", err);
+  }
 };
 const mouseMove = (e) => {
   let feature = window.GlobalViewer.scene.getFeatureByMouse();

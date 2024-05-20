@@ -91,12 +91,19 @@ const selectedComponent = ref("");
 const componentKey = ref(0);
 
 const changeComponent = (val) => {
-  console.log("CoordinateVal", CoordinateVal.value);
-  console.log("CoordinateVal", CoordinateVal.value.clearMeasure);
-  CoordinateVal.value.clearMeasure();
-  MeasurementVal.value.clearMeasure();
-  AreaVal.value.clearMeasure();
-  VolumeVal.value.clearMeasure();
+  // console.log("CoordinateVal", CoordinateVal.value);
+  // console.log("CoordinateVal", CoordinateVal.value.clearMeasure);
+  if (val == 2) {
+    MeasurementVal.value.clearMeasure();
+    AreaVal.value.clearMeasure();
+    VolumeVal.value.clearMeasure();
+  } else {
+    CoordinateVal.value.clearMeasure();
+    MeasurementVal.value.clearMeasure();
+    AreaVal.value.clearMeasure();
+    VolumeVal.value.clearMeasure();
+  }
+
   // console.log("changeComponent", val);
   // meausreVal.value = false;
   // coorVal.value = false;

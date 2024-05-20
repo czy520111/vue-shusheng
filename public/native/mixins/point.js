@@ -112,10 +112,6 @@ export const Point = {
     bbEntity.name = opt.name || "Billboardpoint";
     return bbEntity;
   },
-  getTextEvent(text) {
-    console.log(window.navigator, "5555555"); 
-    // navigator.clipboard.writeText(text);
-  },
   clearMeasure() {
     let length2 = bbList.length;
     for (var i = length2 - 1; i > -1; i--) {
