@@ -71,6 +71,8 @@ const setLine = () => {
 };
 
 const clearMeasure = () => {
+  Native.Measurement.clearMeasure();
+  return;
   if (bbList.length > 0) {
     let length = window.entityAllList.length;
     for (var i = length - 1; i > -1; i--) {
@@ -198,7 +200,7 @@ const ContextMenuEvent = () => {
 
 const dblClickEvent = (event) => {
   console.log(event, "666666666666666");
-  return;
+  // return;
   let url = proxy.$baseUrl;
   Native.Measurement.dblClickEvent({ x: event.x, y: event.y }, url);
   return;
@@ -247,13 +249,15 @@ const mouseDown = (e) => {
   // console.log("mouseDown");
   // let point = getWorldPosition(e);
   // Native.Point.getWorldPosition({ x: e.x, y: e.y }, function (point) {
-  Native.Measurement.mouseDown(function (feature) {
+  Native.Measurement.mouseDown({ x: e.x, y: e.y }, function (feature) {
+    // mouseMoveListener = move;
     if (mouseMoveListener) {
       document
         .getElementById("qtcanvas")
         .removeEventListener("mousemove", mouseMoveListener);
     }
     mouseMoveListener = (e) => movePoint(e, feature);
+    console.log(mouseMoveListener, "99999999999");
     document
       .getElementById("qtcanvas")
       .addEventListener("mousemove", mouseMoveListener);
@@ -304,7 +308,7 @@ const mouseUp = (e) => {
   document.getElementById("qtcanvas").addEventListener("mousedown", setPoint);
 };
 
-const movePoint = (e, feature) => {
+const movePoint = (e) => {
   Native.Measurement.movePoint({ x: e.x, y: e.y }, function (feature) {
     document.getElementById("qtcanvas").style.cursor = "pointer";
   });
@@ -319,7 +323,12 @@ const movePoint = (e, feature) => {
 };
 
 const setPoint = (e) => {
-  Native.Measurement.setPoint();
+  Native.Measurement.setPoint({ x: e.x, y: e.y }, function (feature) {
+    console.log("setPoint", feature);
+    if (feature) {
+      mouseDown(e);
+    }
+  });
   return;
   let feature = window.GlobalViewer.scene.getFeatureByMouse();
   if (feature?.parent.objectName == "bill") {

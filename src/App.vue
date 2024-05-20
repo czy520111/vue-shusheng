@@ -135,49 +135,49 @@ const removeTileset = () => {
 
 onMounted(() => {
   //客户端
-  // if (!window.Native) {
-  //   let canvasEl = document.createElement("div");
-  //   canvasEl.id = "qtcanvas";
-  //   canvasEl.style.cssText = `
-  //           width: 100vw;
-  //           height: 100vh;
-  //           touch-action: none;
-  //       `;
-  //   canvasEl.oncontextmenu = function (e) {
-  //     e.preventDefault();
-  //   };
+  if (!window.Native) {
+    let canvasEl = document.createElement("div");
+    canvasEl.id = "qtcanvas";
+    canvasEl.style.cssText = `
+            width: 100vw;
+            height: 100vh;
+            touch-action: none;
+        `;
+    canvasEl.oncontextmenu = function (e) {
+      e.preventDefault();
+    };
 
-  //   let app = document.querySelector(".viewer-container");
-  //   app.appendChild(canvasEl);
+    let app = document.querySelector(".viewer-container");
+    app.appendChild(canvasEl);
 
-  //   //初始化SSWebChannel.js脚本
-  //   window.ssWebChannel = new SSWebChannel(canvasEl, (channel) => {
-  //     //初始化native模块
-  //     channel.importModule("@/native/main.js", "Native", () => {
-  //       //初始化完成
-  //       window.GlobalViewer.canvasEl = canvasEl;
-  //       emitter.emit("initMap");
-  //     });
-  //   });
-  // }
+    //初始化SSWebChannel.js脚本
+    window.ssWebChannel = new SSWebChannel(canvasEl, (channel) => {
+      //初始化native模块
+      channel.importModule("@/native/main.js", "Native", () => {
+        //初始化完成
+        window.GlobalViewer.canvasEl = canvasEl;
+        emitter.emit("initMap");
+      });
+    });
+  }
 
   //网页端
-  qtLoader({
-    el: container.value,
-  }).then(([SSmap, GlobalViewer]) => {
-    // 设置Native全局变量
-    window.Native = Native;
-    window.nowLayer = null;
-    window.tilesArr = [];
-    // 设置视图全局变量
-    window.GlobalViewer = GlobalViewer;
-    window.SSmap = SSmap;
-    window.scene = GlobalViewer.scene;
-    // 浏览器环境全局变量
-    window.isWeb = true;
-    // 初始化完成
-    Web.initMap();
-  });
+  // qtLoader({
+  //   el: container.value,
+  // }).then(([SSmap, GlobalViewer]) => {
+  //   // 设置Native全局变量
+  //   window.Native = Native;
+  //   window.nowLayer = null;
+  //   window.tilesArr = [];
+  //   // 设置视图全局变量
+  //   window.GlobalViewer = GlobalViewer;
+  //   window.SSmap = SSmap;
+  //   window.scene = GlobalViewer.scene;
+  //   // 浏览器环境全局变量
+  //   window.isWeb = true;
+  //   // 初始化完成
+  //   Web.initMap();
+  // });
 });
 
 emitter.on("initMap", () => {

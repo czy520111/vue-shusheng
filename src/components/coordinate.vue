@@ -50,7 +50,8 @@ const clearMeasure = () => {
   elem.style.display = "none";
   // let elem = document.querySelector(".text-info");
   // elem.style.display = "none";
-  Native.Point.clearMear();
+  Native.Point.clearMeasure();
+  return;
   // if (pointList.length > 0) {
   let length = pointList.length;
   for (var i = length - 1; i > -1; i--) {
@@ -109,8 +110,20 @@ const getTextEvent = (event) => {
   //   console.log(feature.parent.text);
   let el = document.querySelector(".text-info");
   let text = el.innerText;
-  navigator.clipboard.writeText(text);
-  ElMessage.success("复制成功");
+  copyPageUrl();
+  async function copyPageUrl() {
+    try {
+      await navigator.clipboard.writeText(text);
+      console.log("页面地址已被复制！");
+    } catch (err) {
+      console.error("复制失败: ", err);
+    }
+  }
+  // navigator.clipboard.writeText(text);
+  Native.Point.getTextEvent(text, function (tt) {
+    ElMessage.success("复制成功");
+  });
+
   //   }
   // }
 };

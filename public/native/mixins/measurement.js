@@ -1,3 +1,4 @@
+import { getWorldPosition } from "../editor/math";
 //线长
 let pointLineList = [];
 let entityAllList = [];
@@ -188,7 +189,7 @@ export const Measurement = {
     let polyline = this.drawPolyline(polylineObj);
     polyList.push(polyline);
   },
-  mouseDown(cb) {
+  mouseDown(e, cb) {
     // point = SSmap.Vector3.create(point.x, point.y, point.z);
     let feature = window.GlobalViewer.scene.getFeatureByMouse();
     checkFeature = feature;
@@ -200,8 +201,9 @@ export const Measurement = {
       //     .getElementById("qtcanvas")
       //     .removeEventListener("mousemove", mouseMoveListener);
       // }
-      // mouseMoveListener = (e) => movePoint(e, feature);
-      cb(mouseMoveListener);
+      // this.movePoint(e, feature);
+      // debugger;
+      cb(checkFeature);
       // document
       //   .getElementById("qtcanvas")
       //   .addEventListener("mousemove", mouseMoveListener);
@@ -216,12 +218,12 @@ export const Measurement = {
     // console.log(lineList, "+++", bbList);
     this.updataLine();
     cb(mouseMoveListener);
-    if (mouseMoveListener) {
-      // document
-      //   .getElementById("qtcanvas")
-      //   .removeEventListener("mousemove", mouseMoveListener);
-      mouseMoveListener = null; // 置空变量
-    }
+    // if (mouseMoveListener) {
+    //   // document
+    //   //   .getElementById("qtcanvas")
+    //   //   .removeEventListener("mousemove", mouseMoveListener);
+    //   mouseMoveListener = null; // 置空变量
+    // }
     // document
     //   .getElementById("qtcanvas")
     //   .removeEventListener("mousedown", mouseDown);
@@ -233,20 +235,26 @@ export const Measurement = {
     let cameraCtrl = GlobalViewer.scene.mainCamera.cameraController();
     cameraCtrl.enableInputs = false;
     let newPosition = this.getWorldPosition({ x: e.x, y: e.y });
-    // newPosition = SSmap.Vector3.create(
-    //   newPosition.x,
-    //   newPosition.y,
-    //   newPosition.z
-    // );
-    checkFeature.parent.position.x = newPosition.x;
-    checkFeature.parent.position.y = newPosition.y;
-    checkFeature.parent.position.z = newPosition.z;
+    // console.log(e, checkPoint, "5555555", checkFeature, newPosition.x);
+    newPosition = SSmap.Vector3.create(
+      newPosition.x,
+      newPosition.y,
+      newPosition.z
+    );
+    checkFeature.parent.position = newPosition;
+    // checkFeature.parent.position.y = newPosition.y;
+    // checkFeature.parent.position.z = newPosition.z;
     this.updataLine();
   },
-  setPoint() {
+  setPoint(e, cb) {
     let feature = window.GlobalViewer.scene.getFeatureByMouse();
     if (feature && feature.parent.objectName == "bill") {
-      this.mouseDown();
+      // debugger;
+      checkFeature = feature;
+      // feature.parent.position.x = 0;
+
+      // this.mouseDown(e);
+      cb(feature);
     }
   },
   dblClickEvent(event, url) {
@@ -290,6 +298,35 @@ export const Measurement = {
       // } else if (feature.parent.objectName == "bill") {
       //   // console.log("获取点图层属性", feature);
       // }
+    }
+  },
+  
+  clearMeasure() {
+    if (bbList.length > 0) {
+      let length = entityAllList.length;
+      for (var i = length - 1; i > -1; i--) {
+        entityAllList[i].delete();
+        entityAllList.splice(i, 1);
+        delete entityAllList[i];
+      }
+      let length2 = labelList.length;
+      for (var i = length2 - 1; i > -1; i--) {
+        labelList[i].delete();
+        labelList.splice(i, 1);
+        delete labelList[i];
+      }
+      let length3 = bbList.length;
+      for (var i = length3 - 1; i > -1; i--) {
+        bbList[i].delete();
+        bbList.splice(i, 1);
+        delete bbList[i];
+      }
+      let length1 = polyList.length;
+      for (var i = length1 - 1; i > -1; i--) {
+        polyList[i].delete();
+        polyList.splice(i, 1);
+        delete polyList[i];
+      }
     }
   },
   addBillboard(opt, url) {
