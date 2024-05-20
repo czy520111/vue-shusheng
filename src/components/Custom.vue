@@ -206,7 +206,7 @@
         </div>
       </div>
     </div>
-    <div class="picture" v-if="steps == 2">
+    <div class="picture" v-if="showPic">
       <el-button @click="takePic" type="primary">拍照</el-button>
     </div>
     <div class="next-button" v-show="showSureButton">
