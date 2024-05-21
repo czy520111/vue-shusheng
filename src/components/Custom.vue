@@ -668,40 +668,40 @@ const changeBuild = () => {
       delete toRaw(floorGeomList[i]);
     }
     let boxColor = {
-      r: 166,
-      g: 172,
-      b: 227,
+      r: 255,
+      g: 255,
+      b: 255,
       a: 1,
     };
     let boxColor2;
     let boxColor3;
     if (facadeStyle.value == "石材") {
       boxColor2 = {
-        r: 122,
-        g: 151,
-        b: 227,
+        r: 203,
+        g: 213,
+        b: 211,
         a: 1,
       };
     } else {
       boxColor2 = {
-        r: 122,
-        g: 151,
-        b: 227,
-        a: 0.5,
+        r: 203,
+        g: 213,
+        b: 211,
+        a: 0.75,
       };
     }
     if (roomTop.value == "楼顶停车") {
       boxColor3 = {
-        r: 167,
-        g: 81,
-        b: 223,
+        r: 245,
+        g: 195,
+        b: 151,
         a: 1,
       };
     } else {
       boxColor3 = {
-        r: 87,
-        g: 127,
-        b: 223,
+        r: 199,
+        g: 225,
+        b: 171,
         a: 1,
       };
     }

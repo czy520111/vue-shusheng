@@ -40,9 +40,9 @@ window.boxColor4 = {
 };
 window.boxColor5 = {
   //玻璃
-  r: 219,
-  g: 255,
-  b: 255,
+  r: 203,
+  g: 213,
+  b: 211,
   a: 0.75,
 };
 
@@ -150,13 +150,6 @@ export const Custom = {
       newPoints.forEach((point, index) => {
         point = SSmap.Vector3.create(point.x, point.y, point.z);
         let carto = point.toCartographic();
-        // carto = SSmap.Cartographic.fromDegrees(
-        //   carto.longitude,
-        //   carto.latitude,
-        //   0
-        // );
-        // console.log("88888888", carto, point);
-
         cartoArr.push_back(carto);
       });
       node.setPoints(cartoArr);
@@ -234,12 +227,6 @@ export const Custom = {
 
       return scaledPoints;
     }
-
-    // map.set(projectLayer, nodes);
-
-    //返回投影层id
-    // let layerId = store.add(projectLayer, options.id);
-    // cb && cb(layerId);
   },
   addProjection(json) {
     this.addNode({
@@ -319,28 +306,10 @@ export const Custom = {
     // projectLayer.addDataSource(pdSource);
   },
   mouseClickEvent(e, cb) {
-    // const store = useUsersStore();
-    // console.log(store, "123123123");
-    // console.log(tilesArr, "8888888888888");
     let feature = projectLayer.getFeatureByMouse();
-    // tilesArr[16].enabled = false;
-    // console.log(e.arr[0], "feature8888");
-
-    //   (projectLayer).setColor(SSmap.Color.fromRgb(0, 0, 255, 128));
     ProjectFeature = feature;
     console.log(projectLayer, "ppppppppppppp");
     tileFeature = window.GlobalViewer.scene.getFeatureByMouse();
-    // console.log(tileFeature.tileset, "tileFeature666666666");
-    // tileFeature = feature5;
-    // console.log(feature, projectLayer, "789789", projectLayer, feature5);
-    // let ce = direction.center().toVector3();
-    // if (nowNode && feature) {
-    //   nowNode.setColor(SSmap.Color.fromRgb(0, 0, 255, 0.8 * 255)); //一开始颜色
-    //   nowNode.setSelectedColor(SSmap.Color.fromRgb(0, 255, 0, 0.8 * 255)); //点击时颜色
-    //   // (nowNode).setStrokeWidth(3);
-    //   nowNode.setStrokeColor(SSmap.Color.fromRgb(0, 0, 255, 0.8 * 255));
-    // }
-
     if (feature) {
       Tileset.pickFeature({ x: e.x, y: e.y }, (data) => {
         let name = data.properties.name;
@@ -358,7 +327,6 @@ export const Custom = {
       factoryNumber = Layer;
       landNumber = Math.round(Area * 10) / 10;
       modifiedStr = modified;
-      // projectLayer.enabled = false;
       console.log(projectLayer, nodes, "66666666");
       nodes.forEach((item) => {
         item.setColor(SSmap.Color.fromRgb(255, 255, 255, 0.8 * 255));
@@ -684,7 +652,7 @@ export const Custom = {
   },
   drawExtru(center, steps) {
     // return;
-    console.log(steps, "111111111111");
+    // console.log(steps, "111111111111");
     const worldPosition =
       GlobalViewer.scene.globe.ellipsoid.eastNorthUpToFixedFrame(
         center.toCartesian3()
@@ -720,7 +688,7 @@ export const Custom = {
         width: 3,
         alpha: 1,
         pointArr: pointArr,
-        color: SSmap.Color.fromRgb(0, 0, 255, 200),
+        color: SSmap.Color.fromRgb(0, 0, 255, 150),
         altitude: SSmap.AltitudeMethod.Absolute,
         dash: true,
         height: 30,
@@ -731,10 +699,10 @@ export const Custom = {
       floorGeomList.push(polyline);
     } else {
       var obj1 = {
-        alpha: 100, //边界透明度
+        alpha: 150, //边界透明度
         pointArr: pointArr, //点坐标
-        color: SSmap.Color.fromRgb(0, 102, 255, 200), //填充颜色
-        borColor: SSmap.Color.fromRgb(0, 102, 255, 200), //边界颜色
+        color: SSmap.Color.fromRgb(0, 0, 255, 150), //填充颜色
+        borColor: SSmap.Color.fromRgb(0, 0, 255, 150), //边界颜色
         altitude: altitude, //海拔高度模式
         name: "mianhuancong", //名称
         width: 0, //边界宽度
@@ -835,7 +803,10 @@ export const Custom = {
     material.color = SSmap.Color.fromRgb(color.r, color.g, color.b, 1); //材质颜色 RGBA
     var renderer = new SSmap.GeometryRenderer(); //创建几何渲染器
     renderer.castShadow = true; //投射阴影
-    renderer.type = SSmap.GeometryRendererType.Symbol; //符号类型渲染
+    renderer.type =
+      material.opacity == 1
+        ? SSmap.GeometryRendererType.Opaque
+        : SSmap.GeometryRendererType.Translucent; //符号类型渲染
     renderer.primitiveType = SSmap.PrimitiveType.TriangleList; //openGL PrimitiveType：LineStrip 线带  //TriangleStrip 面
     renderer.geometry = geometry;
     renderer.material = material;
