@@ -555,17 +555,62 @@ const showDeitHandle = (value) => {
 // };
 
 const takePic = () => {
-  let el = document.getElementById("qtcanvas");
-  let opts = {
-    width: el.offsetWidth,
-    height: el.offsetHeight,
-    useCORS: true, // 是否尝试使用 CORS 从服务器加载图像
-    allowTaint: false, // 是否允许跨源图像污染画布
-  };
-  html2canvas(el, opts).then((canvas) => {
-    let imgData = canvas.toDataURL("image/png"); // 转base64
-    fileDownload(imgData);
-  });
+  let canvas = document.getElementById("qtcanvas");
+  let parent = canvas.parentNode;
+  // Native.Custom.takePic(canvas);
+  Native.Custom.saveImg(
+    { clientWidth: canvas.clientWidth, clientHeight: canvas.clientHeight },
+    function (base64) {
+      let imgData = "data:image/png;base64," + base64;
+      let img = new Image();
+      img.style.cssText =
+        "position:absolute;left:0;top:0;right:0;bottom:0;z-index:1;";
+      img.src = imgData;
+      img.onload = function () {
+        parent.appendChild(img);
+        let aLink = document.createElement("a");
+        aLink.style.display = "none";
+        aLink.href = imgData;
+        aLink.download = "厂区规划图.png";
+        document.body.appendChild(aLink);
+        aLink.click();
+        document.body.removeChild(aLink);
+        parent.removeChild(img);
+      };
+    }
+  );
+  return;
+  SSmap.saveImage2Base64(canvas.clientWidth, canvas.clientHeight, "PNG").then(
+    function (value) {
+      Native.Custom.takePic(value, (base64) => {
+        console.log(base64, "data");
+        // let imgData = "data:image/png;base64," + base64;
+        // let img = new Image();
+        // img.style.cssText =
+        //   "position:absolute;left:0;top:0;right:0;bottom:0;z-index:1;";
+        // img.src = imgData;
+        // img.onload = function () {
+        //   parent.appendChild(img);
+        //   let aLink = document.createElement("a");
+        //   aLink.style.display = "none";
+        //   aLink.href = imgData;
+        //   aLink.download = "img.png";
+        //   document.body.appendChild(aLink);
+        //   aLink.click();
+        //   document.body.removeChild(aLink);
+        //   parent.removeChild(img);
+        // };
+      });
+    }
+  );
+};
+
+const Uint8ArrayToString = (fileData) => {
+  let str = "";
+  for (var i = 0; i < fileData.length; i++) {
+    str += String.fromCharCode(fileData[i]);
+  }
+  return str;
 };
 
 // 下载图片方法

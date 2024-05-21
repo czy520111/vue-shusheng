@@ -711,6 +711,27 @@ export const Custom = {
       floorGeomList.push(Aentity);
     }
   },
+  saveImg(canvas, cb) {
+    let that = this;
+    SSmap.saveImage2Base64(canvas.clientWidth, canvas.clientHeight, "PNG").then(
+      function (value) {
+        let str = that.takePic(value);
+        cb(str);
+      }
+    );
+  },
+  takePic(value) {
+    let data = SSmap.ByteArray.fromPtr(value).data();
+    let str = this.Uint8ArrayToString(data);
+    return str;
+  },
+  Uint8ArrayToString(fileData) {
+    let str = "";
+    for (var i = 0; i < fileData.length; i++) {
+      str += String.fromCharCode(fileData[i]);
+    }
+    return str;
+  },
   rotationEntity(mat, degX, degY, degZ, offsetHeight) {
     let carto = mat.translation().toCartographic();
     carto.height -= 30;
