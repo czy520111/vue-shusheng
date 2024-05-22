@@ -22,7 +22,7 @@ let checkTiles = null;
 let nowTile = null;
 let floorGeomList = [];
 let layers = {};
-window.boxColor1 = { r: 237, g: 235, b: 227, a: 1 }; //外围色
+window.boxColor1 = { r: 240, g: 240, b: 240, a: 1 }; //外围色
 window.boxColor2 = { r: 203, g: 213, b: 211, a: 1 };
 window.boxColor3 = {
   //花园色

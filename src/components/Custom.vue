@@ -713,9 +713,9 @@ const changeBuild = () => {
       delete toRaw(floorGeomList[i]);
     }
     let boxColor = {
-      r: 255,
-      g: 255,
-      b: 255,
+      r: 240,
+      g: 240,
+      b: 240,
       a: 1,
     };
     let boxColor2;

@@ -215,6 +215,7 @@ const floorGeomList = reactive([]);
 const allGeoList = reactive([]); //所有创建几何体的集合
 const allPointList = reactive([]); //所有创建几何体形状点位的集合
 const topPointList = reactive([]); //顶层建筑点位
+const moveBuildList = reactive([]); //移动建筑的集合
 
 const closeBuilid = () => {
   console.log(
@@ -712,6 +713,7 @@ const redrawExtru = (number) => {
         name: "tPoly",
         altitude: liftHeight * 10, //建筑的海拔高度 z轴
       };
+
       if (showInfo.value) {
         let pps = [];
         points.forEach((item) => {
@@ -818,10 +820,16 @@ const movePoint = (e) => {
 const updatePoly = () => {
   console.log(pointList, floorGeomList);
   console.log("updatePoly", toRaw(topPointList)[0].position.x);
+  // if (pointList.length > 0) {
+  //   pointList[pointList.length - 1].delete(); //删除鼠标移动中前一帧创建的线实体
+  //   pointList.splice(0, pointList.length);
+  // }
   pointList.length = 0;
+
   topPointList.forEach((item) => {
     pointList.push(toRaw(item).position);
   });
+
   floorList[floorList.length - 1].pointArr = [...pointList];
   // redrawExtru();
   // floorGeomList.forEach((item) => {
