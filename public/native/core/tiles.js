@@ -29,6 +29,14 @@ export const Tileset = {
     tileset.contentLoaded((entity) => {
       entity.travalRenderers(function (renderer) {
         //获取每个tile的材质
+
+        let color = {
+          r: renderer.material.color.red,
+          g: renderer.material.color.green,
+          b: renderer.material.color.blue,
+          a: renderer.material.color.alpha,
+        };
+        console.log(color, "rrrrrrr");
       });
     });
     cb(tilesetLayer);
